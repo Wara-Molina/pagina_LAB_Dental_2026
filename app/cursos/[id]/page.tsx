@@ -493,13 +493,6 @@ function CursoDetalleContent() {
                   </div>
 
                   <div className="flex gap-3 w-full sm:w-auto">
-                    <button 
-                      onClick={handleShare}
-                      className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full font-medium text-sm transition-all hover:shadow-lg text-white"
-                      style={{ backgroundColor: primaryColor }}
-                    >
-                      <Share2 className="w-4 h-4" /> Compartir
-                    </button>
                     {institucion?.institucion_correo1 && (
                       <a 
                         href={`mailto:${institucion.institucion_correo1}?subject=Consulta sobre: ${encodeURIComponent(curso.det_titulo)}`}

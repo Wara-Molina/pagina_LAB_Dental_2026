@@ -1,309 +1,211 @@
 // components/videoHome.tsx
-"use client"
+"use client";
 
-import {
-  useEffect,
-  useRef,
-  useState,
-} from "react"
+import { useEffect, useRef, useState } from "react";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 
-import {
-  ArrowRight,
-  PlayCircle,
-} from "lucide-react"
+import { ArrowRight, PlayCircle } from "lucide-react";
 
-import Link from "next/link"
+import Link from "next/link";
 
-import api from "@/lib/axios"
+import api from "@/lib/axios";
 
-import {
-  extractPlainText,
-  sanitizeHTML,
-} from "@/lib/sanitize"
+import { extractPlainText } from "@/lib/utils";
+import { sanitizeHTML } from "@/lib/sanitize";
 
 interface VideoItem {
-  video_id: number
-  video_enlace: string
-  video_titulo: string
-  video_breve_descripcion: string
-  video_tipo: string
-  video_estado: number
+  video_id: number;
+  video_enlace: string;
+  video_titulo: string;
+  video_breve_descripcion: string;
+  video_tipo: string;
+  video_estado: number;
 }
 
 interface Institucion {
-  institucion_nombre: string
+  institucion_nombre: string;
 
   colorinstitucion: Array<{
-    color_primario: string
-    color_secundario: string
-    color_terciario: string
-  }>
+    color_primario: string;
+    color_secundario: string;
+    color_terciario: string;
+  }>;
 }
 
 interface VideoData {
-  videos: VideoItem[]
+  videos: VideoItem[];
 
-  institucion: Institucion | null
+  institucion: Institucion | null;
 }
 
-const isValidHexColor = (
-  color: string | undefined
-): boolean => {
-  if (!color) return false
+const isValidHexColor = (color: string | undefined): boolean => {
+  if (!color) return false;
 
-  return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(
-    color
-  )
-}
+  return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(color);
+};
 
-const getSafeColor = (
-  color: string | undefined,
-  fallback: string
-): string => {
-  if (
-    color &&
-    isValidHexColor(color)
-  ) {
-    return color
+const getSafeColor = (color: string | undefined, fallback: string): string => {
+  if (color && isValidHexColor(color)) {
+    return color;
   }
 
-  return fallback
-}
+  return fallback;
+};
 
-const convertToEmbedUrl = (
-  url: string
-): string | null => {
-  if (!url) return null
+const convertToEmbedUrl = (url: string): string | null => {
+  if (!url) {
+    return null;
+  }
 
   try {
-    if (
-      url.includes(
-        "youtube.com/embed/"
-      )
-    ) {
-      return url
+    const clean = url.trim();
+
+    if (clean.includes("youtube-nocookie.com/embed/")) {
+      return clean;
     }
 
-    const parsed = new URL(url)
+    if (clean.includes("youtube.com/embed/")) {
+      const videoId = clean.split("/embed/")[1]?.split("?")[0];
 
-    if (
-      parsed.hostname.includes(
-        "youtu.be"
-      )
-    ) {
-      const videoId =
-        parsed.pathname.replace(
-          "/",
-          ""
-        )
-
-      return `https://www.youtube.com/embed/${videoId}`
-    }
-
-    if (
-      parsed.hostname.includes(
-        "youtube.com"
-      )
-    ) {
-      const videoId =
-        parsed.searchParams.get(
-          "v"
-        )
-
-      if (videoId) {
-        return `https://www.youtube.com/embed/${videoId}`
+      if (!videoId) {
+        return null;
       }
+
+      return `https://www.youtube-nocookie.com/embed/${videoId}`;
     }
 
-    return null
-  } catch {
-    return null
-  }
-}
+    const parsed = new URL(clean);
 
-const getYoutubeThumbnail = (
-  url: string
-): string => {
-  try {
-    const embedUrl =
-      convertToEmbedUrl(url)
+    let videoId = "";
 
-    if (!embedUrl) {
-      return "/placeholder.svg"
+    if (parsed.hostname.includes("youtu.be")) {
+      videoId = parsed.pathname.replace("/", "");
     }
 
-    const videoId =
-      embedUrl
-        .split("/embed/")[1]
-        ?.split("?")[0]
+    if (parsed.hostname.includes("youtube.com")) {
+      videoId = parsed.searchParams.get("v") || "";
+    }
 
     if (!videoId) {
-      return "/placeholder.svg"
+      return null;
     }
 
-    return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
+    return `https://www.youtube-nocookie.com/embed/${videoId}`;
   } catch {
-    return "/placeholder.svg"
+    return null;
   }
-}
+};
+const getYoutubeThumbnail = (url: string): string => {
+  try {
+    const embedUrl = convertToEmbedUrl(url);
+
+    if (!embedUrl) {
+      return "/placeholder.svg";
+    }
+
+    const videoId = embedUrl.split("/embed/")[1]?.split("?")[0];
+
+    if (!videoId) {
+      return "/placeholder.svg";
+    }
+
+    return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+  } catch {
+    return "/placeholder.svg";
+  }
+};
 
 export function VideoHome() {
-  const sectionRef =
-    useRef<HTMLElement>(null)
+  const sectionRef = useRef<HTMLElement>(null);
 
-  const [data, setData] =
-    useState<VideoData>({
-      videos: [],
-      institucion: null,
-    })
+  const [data, setData] = useState<VideoData>({
+    videos: [],
+    institucion: null,
+  });
 
-  const [loading, setLoading] =
-    useState(true)
+  const [loading, setLoading] = useState(true);
 
-  const [error, setError] =
-    useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null);
 
-  const [isPlaying, setIsPlaying] =
-    useState(false)
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true)
+        setLoading(true);
 
-        const institucionId =
-          Number(
-            process.env
-              .NEXT_PUBLIC_INSTITUCION_ID
-          )
+        const institucionId = Number(process.env.NEXT_PUBLIC_INSTITUCION_ID);
 
-        const results =
-          await Promise.allSettled([
-            api.get(
-              `/institucion/${institucionId}/contenido`
-            ),
+        const results = await Promise.allSettled([
+          api.get(`/institucion/${institucionId}/contenido`),
 
-            api.get(
-              `/institucionesPrincipal/${institucionId}`
-            ),
-          ])
+          api.get(`/institucionesPrincipal/${institucionId}`),
+        ]);
 
         const contenidoRes =
-          results[0].status ===
-          "fulfilled"
-            ? results[0].value
-            : null
+          results[0].status === "fulfilled" ? results[0].value : null;
 
         const instRes =
-          results[1].status ===
-          "fulfilled"
-            ? results[1].value
-            : null
+          results[1].status === "fulfilled" ? results[1].value : null;
 
-        const videosActivos = (
-          contenidoRes?.data
-            ?.upea_videos || []
-        ).filter(
-          (v: any) =>
-            Number(v.video_estado) ===
-            1
-        )
+        const videosActivos = (contenidoRes?.data?.upea_videos || []).filter(
+          (v: VideoItem) => Number(v.video_estado) === 1,
+        );
 
         setData({
           videos: videosActivos,
 
-          institucion:
-            instRes?.data
-              ?.Descripcion || null,
-        })
-      } catch (err: any) {
-        console.error(
-          "Error cargando video:",
-          err
-        )
-
-        setError(
-          "No se pudieron cargar los videos"
-        )
+          institucion: instRes?.data?.Descripcion || null,
+        });
+      } catch {
+        setError("No se pudieron cargar los videos");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchData()
-  }, [])
+    fetchData();
+  }, []);
 
   useEffect(() => {
-    const observer =
-      new IntersectionObserver(
-        (entries) => {
-          entries.forEach(
-            (entry) => {
-              if (
-                entry.isIntersecting
-              ) {
-                entry.target.classList.add(
-                  "animate-fade-up"
-                )
-              }
-            }
-          )
-        },
-        { threshold: 0.1 }
-      )
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("animate-fade-up");
+          }
+        });
+      },
+      { threshold: 0.1 },
+    );
 
-    const elements =
-      sectionRef.current?.querySelectorAll(
-        ".reveal"
-      )
+    const elements = sectionRef.current?.querySelectorAll(".reveal");
 
-    elements?.forEach((el) =>
-      observer.observe(el)
-    )
+    elements?.forEach((el) => observer.observe(el));
 
-    return () =>
-      observer.disconnect()
-  }, [])
+    return () => observer.disconnect();
+  }, []);
 
-  const colores =
-    data.institucion
-      ?.colorinstitucion?.[0]
+  const colores = data.institucion?.colorinstitucion?.[0];
 
-  const primaryColor =
-    getSafeColor(
-      colores?.color_primario,
-      "#04246C"
-    )
+  const primaryColor = getSafeColor(colores?.color_primario, "#04246C");
 
-  const secondaryColor =
-    getSafeColor(
-      colores?.color_secundario,
-      "#FC0102"
-    )
+  const secondaryColor = getSafeColor(colores?.color_secundario, "#FC0102");
 
-  const primerVideo =
-    data.videos[0]
+  const primerVideo = data.videos[0];
 
-  const safeVideoUrl =
-    primerVideo?.video_enlace
-      ? convertToEmbedUrl(
-          primerVideo.video_enlace
-        )
-      : null
+  const safeVideoUrl = primerVideo?.video_enlace
+    ? convertToEmbedUrl(primerVideo.video_enlace)
+    : null;
 
-  const thumbnailUrl =
-    getYoutubeThumbnail(
-      primerVideo?.video_enlace ||
-        ""
-    )
+  const thumbnailUrl = getYoutubeThumbnail(primerVideo?.video_enlace || "");
 
   const institucionNombre =
-    extractPlainText(
-      data.institucion
-        ?.institucion_nombre || ""
-    ).slice(0, 100) || "UPEA"
+    extractPlainText(data.institucion?.institucion_nombre || "").slice(
+      0,
+      100,
+    ) || "UPEA";
 
   if (loading) {
     return (
@@ -322,7 +224,6 @@ export function VideoHome() {
         }}
       >
         <div className="max-w-7xl mx-auto">
-
           <div
             className="
               relative
@@ -341,14 +242,12 @@ export function VideoHome() {
                 bg-cover
                 bg-center
               "
-              style={{
-              }}
+              style={{}}
             />
 
             <div className="absolute inset-0 bg-[#000000cc]" />
 
             <div className="relative z-10 text-center">
-
               <div
                 className="
                   w-12
@@ -361,19 +260,16 @@ export function VideoHome() {
                   mb-4
                 "
                 style={{
-                  borderTopColor:
-                    primaryColor,
+                  borderTopColor: primaryColor,
                 }}
               />
 
-              <p className="text-white text-lg">
-                Cargando video...
-              </p>
+              <p className="text-white text-lg">Cargando video...</p>
             </div>
           </div>
         </div>
       </section>
-    )
+    );
   }
 
   if (error) {
@@ -393,7 +289,6 @@ export function VideoHome() {
         }}
       >
         <div className="max-w-7xl mx-auto">
-
           <div
             className="
               relative
@@ -412,34 +307,26 @@ export function VideoHome() {
                 bg-cover
                 bg-center
               "
-              style={{
-              }}
+              style={{}}
             />
 
             <div className="absolute inset-0 bg-[#000000cc]" />
 
             <div className="relative z-10 text-center">
+              <p className="text-white mb-4">{error}</p>
 
-              <p className="text-white mb-4">
-                {error}
-              </p>
-
-              <Button
-                onClick={() =>
-                  window.location.reload()
-                }
-              >
+              <Button onClick={() => window.location.reload()}>
                 Reintentar
               </Button>
             </div>
           </div>
         </div>
       </section>
-    )
+    );
   }
 
   if (!primerVideo) {
-    return null
+    return null;
   }
 
   return (
@@ -462,13 +349,10 @@ export function VideoHome() {
         `,
       }}
     >
-
       <div className="max-w-7xl mx-auto relative z-10">
-
         {/* TITULO */}
 
         <div className="text-center mb-16 reveal">
-
           <div
             className="
               inline-flex
@@ -487,7 +371,6 @@ export function VideoHome() {
             "
           >
             <PlayCircle className="w-5 h-5" />
-
             Videos Destacados
           </div>
 
@@ -502,8 +385,7 @@ export function VideoHome() {
               text-slate-900
             "
             style={{
-              textShadow:
-                "0 4px 20px rgba(0,0,0,0.35)",
+              textShadow: "0 4px 20px rgba(0,0,0,0.35)",
             }}
           >
             Contenido Multimedia
@@ -518,8 +400,7 @@ export function VideoHome() {
               mb-6
             "
             style={{
-              backgroundColor:
-                secondaryColor,
+              backgroundColor: secondaryColor,
             }}
           />
 
@@ -533,11 +414,7 @@ export function VideoHome() {
               leading-relaxed
             "
           >
-            Descubre videos
-            institucionales,
-            académicos y
-            educativos de{" "}
-
+            Descubre videos institucionales, académicos y educativos de{" "}
             <span
               className="font-bold"
               style={{
@@ -564,7 +441,6 @@ export function VideoHome() {
             backdrop-blur-2xl
           "
         >
-
           <div
             className="
               grid
@@ -572,7 +448,6 @@ export function VideoHome() {
               gap-0
             "
           >
-
             {/* VIDEO */}
 
             <div
@@ -584,7 +459,6 @@ export function VideoHome() {
                 overflow-hidden
               "
             >
-
               {!isPlaying ? (
                 <>
                   <div
@@ -595,8 +469,7 @@ export function VideoHome() {
                       bg-center
                     "
                     style={{
-                      backgroundImage:
-                        `url('${thumbnailUrl}')`,
+                      backgroundImage: `url('${thumbnailUrl}')`,
                     }}
                   />
 
@@ -618,9 +491,7 @@ export function VideoHome() {
                   />
 
                   <button
-                    onClick={() =>
-                      setIsPlaying(true)
-                    }
+                    onClick={() => setIsPlaying(true)}
                     className="
                       absolute
                       inset-0
@@ -649,8 +520,7 @@ export function VideoHome() {
                         group-hover:scale-110
                       "
                       style={{
-                        backgroundColor:
-                          `${primaryColor}DD`,
+                        backgroundColor: `${primaryColor}DD`,
                       }}
                     >
                       <PlayCircle
@@ -672,7 +542,6 @@ export function VideoHome() {
                       right-8
                     "
                   >
-
                     <span
                       className="
                         inline-block
@@ -687,12 +556,10 @@ export function VideoHome() {
                         text-white
                       "
                       style={{
-                        backgroundColor:
-                          `${primaryColor}DD`,
+                        backgroundColor: `${primaryColor}DD`,
                       }}
                     >
-                      {primerVideo.video_tipo ||
-                        "VIDEO"}
+                      {primerVideo.video_tipo || "VIDEO"}
                     </span>
 
                     <h3
@@ -705,9 +572,7 @@ export function VideoHome() {
                         leading-tight
                       "
                     >
-                      {extractPlainText(
-                        primerVideo.video_titulo
-                      ).slice(0, 90)}
+                      {extractPlainText(primerVideo.video_titulo).slice(0, 90)}
                     </h3>
                   </div>
                 </>
@@ -721,31 +586,25 @@ export function VideoHome() {
                 >
                   <iframe
                     key={safeVideoUrl}
-                    src={`${
-                      safeVideoUrl ||
-                      primerVideo.video_enlace
-                    }${
-                      (
-                        safeVideoUrl ||
-                        primerVideo.video_enlace
-                      ).includes("?")
-                        ? "&autoplay=1"
-                        : "?autoplay=1"
-                    }`}
-                    title={
-                      primerVideo.video_titulo
+                    src={
+                      safeVideoUrl
+                        ? `${safeVideoUrl}?autoplay=1&rel=0&modestbranding=1`
+                        : ""
                     }
+                    title={extractPlainText(primerVideo.video_titulo)}
                     className="w-full h-full"
                     loading="lazy"
                     allow="
-                      accelerometer;
-                      autoplay;
-                      clipboard-write;
-                      encrypted-media;
-                      gyroscope;
-                      picture-in-picture
-                    "
+    accelerometer;
+    autoplay;
+    clipboard-write;
+    encrypted-media;
+    gyroscope;
+    picture-in-picture;
+    web-share
+  "
                     allowFullScreen
+                    referrerPolicy="strict-origin-when-cross-origin"
                   />
                 </div>
               )}
@@ -767,7 +626,6 @@ export function VideoHome() {
                 bg-[#f8f5ef]
               "
             >
-
               <div
                 className="
                   absolute
@@ -780,8 +638,7 @@ export function VideoHome() {
                   opacity-10
                 "
                 style={{
-                  backgroundColor:
-                    secondaryColor,
+                  backgroundColor: secondaryColor,
                 }}
               />
 
@@ -797,13 +654,11 @@ export function VideoHome() {
                   opacity-10
                 "
                 style={{
-                  backgroundColor:
-                    primaryColor,
+                  backgroundColor: primaryColor,
                 }}
               />
 
               <div className="relative z-10">
-
                 <p
                   className="
                     text-sm
@@ -812,8 +667,7 @@ export function VideoHome() {
                     mb-5
                   "
                   style={{
-                    color:
-                      secondaryColor,
+                    color: secondaryColor,
                   }}
                 >
                   {institucionNombre}
@@ -830,16 +684,12 @@ export function VideoHome() {
                     mb-8
                   "
                   style={{
-                    color:
-                      primaryColor,
+                    color: primaryColor,
 
-                    textShadow:
-                      "0 2px 10px rgba(0,0,0,0.05)",
+                    textShadow: "0 2px 10px rgba(0,0,0,0.05)",
                   }}
                 >
-                  {extractPlainText(
-                    primerVideo.video_titulo
-                  ).slice(0, 100)}
+                  {extractPlainText(primerVideo.video_titulo).slice(0, 100)}
                 </h2>
 
                 <div
@@ -851,15 +701,11 @@ export function VideoHome() {
                     mb-10
                   "
                   dangerouslySetInnerHTML={{
-                    __html:
-                      sanitizeHTML(
-                        primerVideo.video_breve_descripcion
-                      ),
+                    __html: sanitizeHTML(primerVideo.video_breve_descripcion),
                   }}
                 />
 
                 <Link href="/videos">
-
                   <Button
                     size="lg"
                     className="
@@ -881,7 +727,6 @@ export function VideoHome() {
                     }}
                   >
                     Ver más videos
-
                     <ArrowRight
                       className="
                         ml-2
@@ -893,13 +738,11 @@ export function VideoHome() {
                     />
                   </Button>
                 </Link>
-
               </div>
             </div>
-
           </div>
         </div>
       </div>
     </section>
-  )
+  );
 }

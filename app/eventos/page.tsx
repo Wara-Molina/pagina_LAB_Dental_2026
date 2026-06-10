@@ -471,18 +471,57 @@ function EventosContent() {
                   
                   {/* Calendar Widget */}
                   <div className="bg-white rounded-2xl border shadow-lg overflow-hidden" style={{ borderColor: `${hexToRgba(primaryColor, 0.2)}` }}>
-                    <div className="p-4 border-b" style={{ borderColor: `${hexToRgba(primaryColor, 0.2)}`, background: `${hexToRgba(primaryColor, 0.05)}` }}>
-                      <h2 className="font-bold text-lg flex items-center gap-2 text-gray-900">
-                        <Calendar className="w-5 h-5" style={{ color: primaryColor }} />
-                        Calendario
-                      </h2>
-                    </div>
-                    <div className="p-4">
-                      <CalendarWidget 
-                        colores={{ color_primario: primaryColor, color_secundario: secondaryColor }} 
-                        eventos={eventosParaCalendario} 
-                      />
-                    </div>
+                 <div
+  className="p-5 border-b"
+  style={{
+    borderColor: `${hexToRgba(primaryColor, 0.15)}`,
+    background: `linear-gradient(
+      135deg,
+      ${hexToRgba(primaryColor, 0.10)} 0%,
+      rgba(255,255,255,0.9) 100%
+    )`,
+  }}
+>
+  <div className="flex items-center gap-4">
+    <div
+      className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg"
+      style={{
+        background: `linear-gradient(
+          135deg,
+          ${primaryColor},
+          ${hexToRgba(primaryColor, 0.75)}
+        )`,
+      }}
+    >
+      <Calendar className="w-6 h-6 text-white" />
+    </div>
+
+    <div>
+      <h2 className="text-2xl font-extrabold text-slate-800 leading-none">
+        Calendario
+      </h2>
+
+      <p className="text-sm text-slate-500 mt-1">
+        Agenda institucional
+      </p>
+    </div>
+  </div>
+</div>
+<div
+  className="p-4 rounded-3xl backdrop-blur-xl border border-white/10 shadow-2xl"
+  style={{
+    background:
+      "linear-gradient(180deg, rgba(77,84,106,0.95) 0%, rgba(66,72,92,0.95) 100%)",
+  }}
+>
+  <CalendarWidget
+    colores={{
+      color_primario: primaryColor,
+      color_secundario: secondaryColor,
+    }}
+    eventos={eventosParaCalendario}
+  />
+</div>
                   </div>
 
                   {/* Quick Events List */}
@@ -522,25 +561,6 @@ function EventosContent() {
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section className="py-16" style={{ background: `linear-gradient(135deg, ${hexToRgba(primaryColor, 0.1)}, ${hexToRgba(secondaryColor, 0.1)})` }}>
-          <div className="max-w-4xl mx-auto px-4 text-center">
-            <h2 className="text-3xl font-bold mb-4 font-serif" style={{ color: primaryColor }}>
-              ¿Quieres organizar un evento?
-            </h2>
-            <p className="text-gray-600 mb-8 text-lg">
-              Contáctanos para coordinar actividades académicas, culturales o deportivas
-            </p>
-            <Link 
-              href="/contacto"
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-full text-white font-semibold shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
-              style={{ backgroundColor: primaryColor }}
-            >
-              Contactar ahora
-              <ArrowLeft className="w-5 h-5 transform rotate-180" />
-            </Link>
-          </div>
-        </section>
       </main>
 
       <Footer />

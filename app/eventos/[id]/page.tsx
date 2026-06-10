@@ -479,13 +479,7 @@ function EventoDetalleContent() {
 
                 {/* Actions */}
                 <div className="flex flex-wrap gap-3 pt-6 border-t" style={{ borderColor: `${hexToRgba(primaryColor, 0.2)}` }}>
-                  <button 
-                    onClick={handleShare} 
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-medium text-sm transition-all hover:shadow-lg text-white"
-                    style={{ backgroundColor: primaryColor }}
-                  >
-                    <Share2 className="w-4 h-4" /> Compartir evento
-                  </button>
+
                   {institucion?.institucion_correo1 && (
                     <a 
                       href={`mailto:${institucion.institucion_correo1}?subject=Consulta sobre: ${encodeURIComponent(evento.evento_titulo)}`}

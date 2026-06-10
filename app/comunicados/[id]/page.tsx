@@ -464,13 +464,6 @@ function ComunicadoDetalleContent() {
                 {/* Actions */}
                 <div className="flex flex-wrap gap-3 pt-6 border-t" style={{ borderColor: `${hexToRgba(primaryColor, 0.2)}` }}>
 
-                  <button 
-                    onClick={handleShare}
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-medium text-sm transition-all hover:shadow-lg border-2"
-                    style={{ borderColor: secondaryColor, color: secondaryColor }}
-                  >
-                    <Share2 className="w-4 h-4" /> Compartir
-                  </button>
                   {institucion?.institucion_correo1 && (
                     <a 
                       href={`mailto:${institucion.institucion_correo1}?subject=Consulta sobre: ${encodeURIComponent(comunicado.con_titulo)}`}

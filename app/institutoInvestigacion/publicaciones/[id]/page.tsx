@@ -11,7 +11,8 @@ import Image from 'next/image';
 
 import api from '@/lib/axios';
 import { getStorageUrl } from '@/lib/utils';
-import { sanitizeHTML, sanitizeText, validateNumericId } from '@/lib/sanitize';
+import { sanitizeHTML, sanitizeText} from '@/lib/sanitize';
+import { validateNumericId } from '@/lib/security';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 

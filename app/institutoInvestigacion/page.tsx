@@ -13,7 +13,10 @@ import Image from 'next/image';
 
 import api from '@/lib/axios';
 import { getStorageUrl } from '@/lib/utils';
-import { sanitizeHTML, sanitizeText, sanitizeQueryParam } from '@/lib/sanitize';
+import { sanitizeHTML, sanitizeText } from '@/lib/sanitize';
+import {
+  sanitizeQueryParam
+} from '@/lib/security';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 

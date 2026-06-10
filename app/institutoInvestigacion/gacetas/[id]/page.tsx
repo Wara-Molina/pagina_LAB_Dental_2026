@@ -10,7 +10,8 @@ import Link from 'next/link';
 
 import api from '@/lib/axios';
 import { getStorageUrl } from '@/lib/utils';
-import { sanitizeHTML, sanitizeText, validateNumericId } from '@/lib/sanitize';
+import { sanitizeHTML, sanitizeText } from '@/lib/sanitize';
+import { validateNumericId } from '@/lib/security';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 
@@ -67,6 +68,7 @@ const isValidDocumentUrl = (url: string | undefined): boolean => {
   } catch {
     return false;
   }
+  
 };
 
 // ==================== COMPONENTE ====================
@@ -385,13 +387,6 @@ function GacetaInvestigacionDetalleContent() {
                     <ExternalLink className="w-5 h-5" /> Abrir en nueva pestaña
                   </a>
 
-                  <button 
-                    onClick={handleShare}
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all hover:shadow-lg border-2"
-                    style={{ borderColor: tertiaryColor, color: tertiaryColor }}
-                  >
-                    <Share2 className="w-5 h-5" /> Compartir
-                  </button>
                 </div>
               </div>
             </div>

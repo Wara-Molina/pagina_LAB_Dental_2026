@@ -1,25 +1,20 @@
-'use client';
+"use client";
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense } from "react";
 
-import { useParams } from 'next/navigation';
+import { useParams } from "next/navigation";
 
-import {
-  ArrowLeft,
-  ExternalLink,
-  Youtube,
-  Info,
-} from 'lucide-react';
+import { ArrowLeft, ExternalLink, Youtube, Info } from "lucide-react";
 
-import Link from 'next/link';
+import Link from "next/link";
 
-import api from '@/lib/axios';
+import api from "@/lib/axios";
 
-import { sanitizeHTML } from '@/lib/sanitize';
+import { sanitizeHTML } from "@/lib/sanitize";
 
-import { Header } from '@/components/header';
+import { Header } from "@/components/header";
 
-import { Footer } from '@/components/footer';
+import { Footer } from "@/components/footer";
 
 interface Video {
   video_id: number;
@@ -53,9 +48,7 @@ interface InstitucionData {
 |--------------------------------------------------------------------------
 */
 
-const getYouTubeId = (
-  url?: string
-): string | null => {
+const getYouTubeId = (url?: string): string | null => {
   if (!url) return null;
 
   try {
@@ -63,14 +56,8 @@ const getYouTubeId = (
      * EMBED
      */
 
-    if (
-      url.includes(
-        'youtube.com/embed/'
-      )
-    ) {
-      const match = url.match(
-        /embed\/([a-zA-Z0-9_-]{11})/
-      );
+    if (url.includes("youtube.com/embed/")) {
+      const match = url.match(/embed\/([a-zA-Z0-9_-]{11})/);
 
       return match?.[1] || null;
     }
@@ -79,37 +66,20 @@ const getYouTubeId = (
      * WATCH
      */
 
-    if (
-      url.includes(
-        'youtube.com/watch'
-      )
-    ) {
-      const parsed =
-        new URL(url);
+    if (url.includes("youtube.com/watch")) {
+      const parsed = new URL(url);
 
-      return (
-        parsed.searchParams.get(
-          'v'
-        ) || null
-      );
+      return parsed.searchParams.get("v") || null;
     }
 
     /*
      * SHORT
      */
 
-    if (
-      url.includes(
-        'youtu.be/'
-      )
-    ) {
-      const parsed =
-        new URL(url);
+    if (url.includes("youtu.be/")) {
+      const parsed = new URL(url);
 
-      return parsed.pathname.replace(
-        '/',
-        ''
-      );
+      return parsed.pathname.replace("/", "");
     }
 
     return null;
@@ -118,13 +88,10 @@ const getYouTubeId = (
   }
 };
 
-const getEmbedUrl = (
-  url?: string
-): string => {
-  const id =
-    getYouTubeId(url);
+const getEmbedUrl = (url?: string): string => {
+  const id = getYouTubeId(url);
 
-  if (!id) return '';
+  if (!id) return "";
 
   return `https://www.youtube.com/embed/${id}?autoplay=0&rel=0&modestbranding=1`;
 };
@@ -135,101 +102,49 @@ const getEmbedUrl = (
 |--------------------------------------------------------------------------
 */
 
-const isValidHexColor = (
-  color: string | undefined
-): boolean => {
+const isValidHexColor = (color: string | undefined): boolean => {
   if (!color) return false;
 
-  return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(
-    color
-  );
+  return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(color);
 };
 
-const getSafeColor = (
-  color: string | undefined,
-  fallback: string
-): string => {
-  return isValidHexColor(color)
-    ? color!
-    : fallback;
+const getSafeColor = (color: string | undefined, fallback: string): string => {
+  return isValidHexColor(color) ? color! : fallback;
 };
 
-const hexToRgba = (
-  hex: string,
-  alpha: number
-): string => {
-  const cleanHex =
-    hex.replace('#', '');
+const hexToRgba = (hex: string, alpha: number): string => {
+  const cleanHex = hex.replace("#", "");
 
-  const r = parseInt(
-    cleanHex.substring(0, 2),
-    16
-  );
+  const r = parseInt(cleanHex.substring(0, 2), 16);
 
-  const g = parseInt(
-    cleanHex.substring(2, 4),
-    16
-  );
+  const g = parseInt(cleanHex.substring(2, 4), 16);
 
-  const b = parseInt(
-    cleanHex.substring(4, 6),
-    16
-  );
+  const b = parseInt(cleanHex.substring(4, 6), 16);
 
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
 function VideoDetalleContent() {
-  const params =
-    useParams();
+  const params = useParams();
 
-  const rawVideoId =
-    Number(params.id);
+  const rawVideoId = Number(params.id);
 
   const videoId =
-    Number.isInteger(
-      rawVideoId
-    ) &&
-    rawVideoId > 0
-      ? rawVideoId
-      : null;
+    Number.isInteger(rawVideoId) && rawVideoId > 0 ? rawVideoId : null;
 
-  const [video, setVideo] =
-    useState<Video | null>(
-      null
-    );
+  const [video, setVideo] = useState<Video | null>(null);
 
-  const [
-    institucion,
-    setInstitucion,
-  ] =
-    useState<InstitucionData | null>(
-      null
-    );
+  const [institucion, setInstitucion] = useState<InstitucionData | null>(null);
 
-  const [loading, setLoading] =
-    useState(true);
+  const [loading, setLoading] = useState(true);
 
-  const [error, setError] =
-    useState<string | null>(
-      null
-    );
+  const [error, setError] = useState<string | null>(null);
 
-  const [
-    primaryColor,
-    setPrimaryColor,
-  ] = useState('#04246C');
+  const [primaryColor, setPrimaryColor] = useState("#04246C");
 
-  const [
-    secondaryColor,
-    setSecondaryColor,
-  ] = useState('#FC0102');
+  const [secondaryColor, setSecondaryColor] = useState("#FC0102");
 
-  const institucionId =
-    Number(
-      process.env
-        .NEXT_PUBLIC_INSTITUCION_ID
-    ) || 12;
+  const institucionId = Number(process.env.NEXT_PUBLIC_INSTITUCION_ID) || 12;
 
   /*
    * FETCH
@@ -238,100 +153,55 @@ function VideoDetalleContent() {
   useEffect(() => {
     let mounted = true;
 
-    const fetchData =
-      async () => {
-        try {
-          setLoading(true);
+    const fetchData = async () => {
+      try {
+        setLoading(true);
 
-          const [
-            contenidoRes,
-            instRes,
-          ] =
-            await Promise.all([
-              api.get(
-                `/institucion/${institucionId}/contenido`
-              ),
+        const [contenidoRes, instRes] = await Promise.all([
+          api.get(`/institucion/${institucionId}/contenido`),
 
-              api.get(
-                `/institucionesPrincipal/${institucionId}`
-              ),
-            ]);
+          api.get(`/institucionesPrincipal/${institucionId}`),
+        ]);
 
-          if (!mounted)
-            return;
+        if (!mounted) return;
 
-          const encontrado =
-            contenidoRes.data.upea_videos?.find(
-              (v: any) =>
-                Number(
-                  v.video_id
-                ) === videoId &&
-                Number(
-                  v.video_estado
-                ) === 1
-            );
+        const encontrado = contenidoRes.data.upea_videos?.find(
+          (v: any) =>
+            Number(v.video_id) === videoId && Number(v.video_estado) === 1,
+        );
 
-          if (!encontrado) {
-            setError(
-              'Video no encontrado'
-            );
+        if (!encontrado) {
+          setError("Video no encontrado");
 
-            return;
-          }
-
-          setVideo(
-            encontrado
-          );
-
-          setInstitucion(
-            instRes.data
-              .Descripcion ||
-              null
-          );
-
-          const colores =
-            instRes.data
-              ?.Descripcion
-              ?.colorinstitucion?.[0];
-
-          if (colores) {
-            setPrimaryColor(
-              getSafeColor(
-                colores.color_primario,
-                '#04246C'
-              )
-            );
-
-            setSecondaryColor(
-              getSafeColor(
-                colores.color_secundario,
-                '#FC0102'
-              )
-            );
-          }
-        } catch {
-          if (mounted) {
-            setError(
-              'Error cargando video'
-            );
-          }
-        } finally {
-          if (mounted)
-            setLoading(
-              false
-            );
+          return;
         }
-      };
+
+        setVideo(encontrado);
+
+        setInstitucion(instRes.data.Descripcion || null);
+
+        const colores = instRes.data?.Descripcion?.colorinstitucion?.[0];
+
+        if (colores) {
+          setPrimaryColor(getSafeColor(colores.color_primario, "#04246C"));
+
+          setSecondaryColor(getSafeColor(colores.color_secundario, "#FC0102"));
+        }
+      } catch {
+        if (mounted) {
+          setError("Error cargando video");
+        }
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
 
     fetchData();
 
     return () => {
       mounted = false;
     };
-  }, [
-    videoId,
-    institucionId,
-  ]);
+  }, [videoId, institucionId]);
 
   /*
    * LOADING
@@ -352,11 +222,9 @@ function VideoDetalleContent() {
               animate-spin
             "
             style={{
-              borderColor:
-                `${hexToRgba(primaryColor, 0.2)}`,
+              borderColor: `${hexToRgba(primaryColor, 0.2)}`,
 
-              borderTopColor:
-                primaryColor,
+              borderTopColor: primaryColor,
             }}
           />
         </div>
@@ -376,9 +244,7 @@ function VideoDetalleContent() {
         <Header />
 
         <div className="flex-1 flex items-center justify-center p-8">
-
           <div className="text-center">
-
             <h2
               className="
                 text-4xl
@@ -404,12 +270,10 @@ function VideoDetalleContent() {
                 font-semibold
               "
               style={{
-                backgroundColor:
-                  primaryColor,
+                backgroundColor: primaryColor,
               }}
             >
               <ArrowLeft className="w-5 h-5" />
-
               Volver
             </Link>
           </div>
@@ -424,15 +288,9 @@ function VideoDetalleContent() {
    * YOUTUBE
    */
 
-  const youtubeId =
-    getYouTubeId(
-      video.video_enlace
-    );
+  const youtubeId = getYouTubeId(video.video_enlace);
 
-  const embedUrl =
-    getEmbedUrl(
-      video.video_enlace
-    );
+  const embedUrl = getEmbedUrl(video.video_enlace);
 
   return (
     <div
@@ -452,7 +310,6 @@ function VideoDetalleContent() {
       <Header />
 
       <main className="flex-1">
-
         <div
           className="
             max-w-7xl
@@ -462,7 +319,6 @@ function VideoDetalleContent() {
             lg:py-12
           "
         >
-
           <br />
           <br />
           <br />
@@ -470,7 +326,6 @@ function VideoDetalleContent() {
           {/* TITULO ARRIBA */}
 
           <div className="mb-10">
-
             {video.video_tipo && (
               <span
                 className="
@@ -483,16 +338,12 @@ function VideoDetalleContent() {
                   mb-5
                 "
                 style={{
-                  backgroundColor:
-                    `${hexToRgba(primaryColor, 0.12)}`,
+                  backgroundColor: `${hexToRgba(primaryColor, 0.12)}`,
 
-                  color:
-                    primaryColor,
+                  color: primaryColor,
                 }}
               >
-                {
-                  video.video_tipo
-                }
+                {video.video_tipo}
               </span>
             )}
 
@@ -508,9 +359,7 @@ function VideoDetalleContent() {
                 mb-6
               "
             >
-              {
-                video.video_titulo
-              }
+              {video.video_titulo}
             </h1>
 
             {video.video_breve_descripcion && (
@@ -522,10 +371,7 @@ function VideoDetalleContent() {
                   max-w-5xl
                 "
                 dangerouslySetInnerHTML={{
-                  __html:
-                    sanitizeHTML(
-                      video.video_breve_descripcion
-                    ),
+                  __html: sanitizeHTML(video.video_breve_descripcion),
                 }}
               />
             )}
@@ -534,7 +380,6 @@ function VideoDetalleContent() {
           {/* VIDEO */}
 
           <div className="mb-12">
-
             <div
               className="
                 bg-black
@@ -546,12 +391,8 @@ function VideoDetalleContent() {
             >
               {youtubeId ? (
                 <iframe
-                  src={
-                    embedUrl
-                  }
-                  title={
-                    video.video_titulo
-                  }
+                  src={embedUrl}
+                  title={video.video_titulo}
                   allow="
                     accelerometer;
                     autoplay;
@@ -581,7 +422,6 @@ function VideoDetalleContent() {
                   "
                 >
                   <div className="text-center">
-
                     <div
                       className="
                         w-24
@@ -594,8 +434,7 @@ function VideoDetalleContent() {
                         mb-6
                       "
                       style={{
-                        backgroundColor:
-                          `${hexToRgba(secondaryColor, 0.15)}`,
+                        backgroundColor: `${hexToRgba(secondaryColor, 0.15)}`,
                       }}
                     >
                       <Youtube
@@ -604,15 +443,12 @@ function VideoDetalleContent() {
                           h-14
                         "
                         style={{
-                          color:
-                            secondaryColor,
+                          color: secondaryColor,
                         }}
                       />
                     </div>
 
-                    <p className="text-white text-xl">
-                      Video no disponible
-                    </p>
+                    <p className="text-white text-xl">Video no disponible</p>
                   </div>
                 </div>
               )}
@@ -622,9 +458,7 @@ function VideoDetalleContent() {
           {/* INFO */}
 
           <div className="grid lg:grid-cols-3 gap-8">
-
             <div className="lg:col-span-2">
-
               <div
                 className="
                   bg-white
@@ -634,11 +468,9 @@ function VideoDetalleContent() {
                   shadow-sm
                 "
                 style={{
-                  borderColor:
-                    `${hexToRgba(primaryColor, 0.15)}`,
+                  borderColor: `${hexToRgba(primaryColor, 0.15)}`,
                 }}
               >
-
                 <h2
                   className="
                     text-3xl
@@ -657,11 +489,7 @@ function VideoDetalleContent() {
                     text-lg
                   "
                   dangerouslySetInnerHTML={{
-                    __html:
-                      sanitizeHTML(
-                        video.video_breve_descripcion ||
-                          ''
-                      ),
+                    __html: sanitizeHTML(video.video_breve_descripcion || ""),
                   }}
                 />
               </div>
@@ -670,7 +498,6 @@ function VideoDetalleContent() {
             {/* SIDEBAR */}
 
             <div>
-
               <div
                 className="
                   bg-white
@@ -682,11 +509,9 @@ function VideoDetalleContent() {
                   shadow-sm
                 "
                 style={{
-                  borderColor:
-                    `${hexToRgba(primaryColor, 0.15)}`,
+                  borderColor: `${hexToRgba(primaryColor, 0.15)}`,
                 }}
               >
-
                 <div
                   className="
                     flex
@@ -705,8 +530,7 @@ function VideoDetalleContent() {
                       justify-center
                     "
                     style={{
-                      backgroundColor:
-                        `${hexToRgba(primaryColor, 0.12)}`,
+                      backgroundColor: `${hexToRgba(primaryColor, 0.12)}`,
                     }}
                   >
                     <Info
@@ -715,8 +539,7 @@ function VideoDetalleContent() {
                         h-6
                       "
                       style={{
-                        color:
-                          primaryColor,
+                        color: primaryColor,
                       }}
                     />
                   </div>
@@ -733,7 +556,6 @@ function VideoDetalleContent() {
                 </div>
 
                 <div className="space-y-8">
-
                   <div>
                     <p
                       className="
@@ -743,8 +565,7 @@ function VideoDetalleContent() {
                         mb-2
                       "
                       style={{
-                        color:
-                          primaryColor,
+                        color: primaryColor,
                       }}
                     >
                       Institución
@@ -757,10 +578,7 @@ function VideoDetalleContent() {
                         text-gray-900
                       "
                     >
-                      {
-                        institucion?.institucion_nombre ||
-                        'UPEA'
-                      }
+                      {institucion?.institucion_nombre || "UPEA"}
                     </p>
                   </div>
 
@@ -774,8 +592,7 @@ function VideoDetalleContent() {
                           mb-2
                         "
                         style={{
-                          color:
-                            primaryColor,
+                          color: primaryColor,
                         }}
                       >
                         Categoría
@@ -788,9 +605,7 @@ function VideoDetalleContent() {
                           text-gray-900
                         "
                       >
-                        {
-                          video.video_tipo
-                        }
+                        {video.video_tipo}
                       </p>
                     </div>
                   )}
@@ -813,21 +628,17 @@ function VideoDetalleContent() {
                         hover:scale-[1.02]
                       "
                       style={{
-                        backgroundColor:
-                          '#FF0000',
+                        backgroundColor: "#FF0000",
                       }}
                     >
                       <Youtube className="w-6 h-6" />
-
                       Ver en YouTube
-
                       <ExternalLink className="w-5 h-5" />
                     </a>
                   )}
                 </div>
               </div>
             </div>
-
           </div>
         </div>
       </main>
@@ -842,9 +653,7 @@ export default function VideoDetallePage() {
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center bg-[#f8f5ef]">
-
           <div className="w-14 h-14 border-4 border-gray-300 border-t-[#04246C] rounded-full animate-spin" />
-
         </div>
       }
     >

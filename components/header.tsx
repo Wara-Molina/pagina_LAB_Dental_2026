@@ -1,9 +1,9 @@
 // components/header.tsx
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
+import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
+import Image from "next/image";
 import {
   Menu,
   X,
@@ -12,10 +12,10 @@ import {
   User,
   ExternalLink,
   BookOpen,
-} from 'lucide-react';
-import DOMPurify from 'dompurify';
+} from "lucide-react";
+import DOMPurify from "dompurify";
 
-import api from '@/lib/axios';
+import api from "@/lib/axios";
 
 interface ColorInstitucion {
   color_primario: string;
@@ -42,7 +42,7 @@ interface ComunicadoItem {
   id: number;
   titulo: string;
   url: string;
-  tipo: 'CONVOCATORIAS' | 'AVISOS' | 'COMUNICADOS';
+  tipo: "CONVOCATORIAS" | "AVISOS" | "COMUNICADOS";
 }
 
 interface EnlaceItem {
@@ -70,9 +70,9 @@ interface Usuario {
 }
 
 const isLightColor = (hex: string): boolean => {
-  if (!hex || typeof hex !== 'string') return false;
+  if (!hex || typeof hex !== "string") return false;
 
-  const color = hex.replace('#', '');
+  const color = hex.replace("#", "");
 
   if (!/^[0-9A-Fa-f]{6}$/.test(color)) return false;
 
@@ -85,20 +85,43 @@ const isLightColor = (hex: string): boolean => {
   return luminance > 0.5;
 };
 
+const SAFE_DOMAINS = [
+  "facebook.com",
+  "fb.com",
+  "youtube.com",
+  "youtu.be",
+  "t.me",
+  "telegram.me",
+  "upea.bo",
+  "upea.edu.bo",
+  "archivosminio.upea.bo",
+];
+
+const isValidHexColor = (value: string | undefined): boolean => {
+  if (!value) return false;
+  return /^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/.test(value);
+};
+
 const isValidUrl = (url: string | undefined): boolean => {
   if (!url) return false;
 
   try {
-    const parsed = new URL(url);
+    const parsed = new URL(url.trim());
 
-    return ['http:', 'https:'].includes(parsed.protocol);
+    if (!["http:", "https:"].includes(parsed.protocol)) {
+      return false;
+    }
+
+    const host = parsed.hostname.toLowerCase();
+
+    return SAFE_DOMAINS.some((d) => host === d || host.endsWith(`.${d}`));
   } catch {
     return false;
   }
 };
 
 const sanitizeText = (text: string | undefined): string => {
-  if (!text) return '';
+  if (!text) return "";
 
   return DOMPurify.sanitize(text, {
     ALLOWED_TAGS: [],
@@ -106,37 +129,31 @@ const sanitizeText = (text: string | undefined): string => {
   }).trim();
 };
 
-
 export function Header() {
-const institucionId = Number(
-  process.env.NEXT_PUBLIC_INSTITUCION_ID
-);
-  const [institucion, setInstitucion] =
-    useState<InstitucionData | null>(null);
+  const institucionId = Number(process.env.NEXT_PUBLIC_INSTITUCION_ID);
+  const [institucion, setInstitucion] = useState<InstitucionData | null>(null);
 
   const [loading, setLoading] = useState(true);
 
   const [error, setError] = useState<string | null>(null);
 
-  const [primaryColor, setPrimaryColor] = useState('#04246C');
+  const [primaryColor, setPrimaryColor] = useState("#04246C");
 
-  const [secondaryColor, setSecondaryColor] = useState('#FC0102');
+  const [secondaryColor, setSecondaryColor] = useState("#FC0102");
 
-  const [tertiaryColor, setTertiaryColor] = useState('#020733');
+  const [tertiaryColor, setTertiaryColor] = useState("#020733");
 
   const [cursosItems, setCursosItems] = useState<CursoItem[]>([]);
 
-  const [comunicadosItems, setComunicadosItems] = useState<
-    ComunicadoItem[]
-  >([]);
+  const [comunicadosItems, setComunicadosItems] = useState<ComunicadoItem[]>(
+    [],
+  );
 
   const [enlacesItems, setEnlacesItems] = useState<EnlaceItem[]>([]);
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const [openDropdown, setOpenDropdown] = useState<string | null>(
-    null
-  );
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
@@ -144,40 +161,27 @@ const institucionId = Number(
 
   const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-
   const isLightBackground = isLightColor(tertiaryColor);
 
-  const textColor = isLightBackground
-    ? 'text-gray-900'
-    : 'text-white';
+  const textColor = isLightBackground ? "text-gray-900" : "text-white";
 
   const textColorHover = isLightBackground
-    ? 'hover:text-gray-700'
-    : 'hover:text-white';
+    ? "hover:text-gray-700"
+    : "hover:text-white";
 
-  const textColorMuted = isLightBackground
-    ? 'text-gray-600'
-    : 'text-white/70';
+  const textColorMuted = isLightBackground ? "text-gray-600" : "text-white/70";
 
-  const textColorDimmed = isLightBackground
-    ? 'text-gray-500'
-    : 'text-white/60';
+  const textColorDimmed = isLightBackground ? "text-gray-500" : "text-white/60";
 
-  const borderColor = isLightBackground
-    ? 'border-gray-200'
-    : 'border-white/10';
+  const borderColor = isLightBackground ? "border-gray-200" : "border-white/10";
 
-  const hoverBg = isLightBackground
-    ? 'hover:bg-gray-100'
-    : 'hover:bg-white/10';
+  const hoverBg = isLightBackground ? "hover:bg-gray-100" : "hover:bg-white/10";
 
-  const dropdownBg = isLightBackground
-    ? 'bg-white'
-    : tertiaryColor;
+  const dropdownBg = isLightBackground ? "bg-white" : tertiaryColor;
 
   const dropdownText = isLightBackground
-    ? 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
-    : 'text-white/90 hover:text-white hover:bg-white/10';
+    ? "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+    : "text-white/90 hover:text-white hover:bg-white/10";
 
   useEffect(() => {
     if (!institucionId) return;
@@ -190,131 +194,100 @@ const institucionId = Number(
 
         setError(null);
 
-      const results = await Promise.allSettled([
-  api.get(`/institucionesPrincipal/${institucionId}`),
+        const results = await Promise.allSettled([
+          api.get(`/institucionesPrincipal/${institucionId}`),
 
-  api.get(
-    `/institucion/${institucionId}/recursos`
-  ),
+          api.get(`/institucion/${institucionId}/recursos`),
 
-  api.get(
-    `/institucion/${institucionId}/gacetaEventos`
-  ),
-]);
+          api.get(`/institucion/${institucionId}/gacetaEventos`),
+        ]);
 
-const instRes =
-  results[0].status === 'fulfilled'
-    ? results[0].value
-    : null;
+        const instRes =
+          results[0].status === "fulfilled" ? results[0].value : null;
 
-const recursosRes =
-  results[1].status === 'fulfilled'
-    ? results[1].value
-    : null;
+        const recursosRes =
+          results[1].status === "fulfilled" ? results[1].value : null;
 
-const gacetaRes =
-  results[2].status === 'fulfilled'
-    ? results[2].value
-    : null;
+        const gacetaRes =
+          results[2].status === "fulfilled" ? results[2].value : null;
 
         if (!isMounted) return;
 
-      const instData = instRes?.data?.Descripcion;
+        const instData = instRes?.data?.Descripcion;
 
         if (instData) {
           setInstitucion(instData);
 
           if (instData.colorinstitucion?.[0]) {
             setPrimaryColor(
-              instData.colorinstitucion[0].color_primario ||
-                '#04246C'
+              isValidHexColor(instData.colorinstitucion[0].color_primario)
+                ? instData.colorinstitucion[0].color_primario
+                : "#04246C",
             );
 
             setSecondaryColor(
-              instData.colorinstitucion[0]
-                .color_secundario || '#FC0102'
+              instData.colorinstitucion[0].color_secundario || "#FC0102",
             );
 
             setTertiaryColor(
-              instData.colorinstitucion[0].color_terciario ||
-                '#020733'
+              instData.colorinstitucion[0].color_terciario || "#020733",
             );
           }
         }
-if (recursosRes?.data?.linksExternoInterno) {
-          const enlaces =
-            recursosRes.data.linksExternoInterno
-              .filter(
-                (l: any) =>
-                  l?.estado === 1 &&
-                  isValidUrl(l?.url_link)
-              )
-              .map((l: any) => ({
-                id: Number(l.id_link),
-                nombre: sanitizeText(l.nombre),
-                url: l.url_link,
-                tipo: sanitizeText(l.tipo),
-              }));
+        if (recursosRes?.data?.linksExternoInterno) {
+          const enlaces = recursosRes.data.linksExternoInterno
+            .filter((l: any) => l?.estado === 1 && isValidUrl(l?.url_link))
+            .map((l: any) => ({
+              id: Number(l.id_link),
+              nombre: sanitizeText(l.nombre),
+              url: l.url_link,
+              tipo: sanitizeText(l.tipo),
+            }));
 
           setEnlacesItems(enlaces);
         }
 
-       if (gacetaRes?.data?.cursos) {
+        if (gacetaRes?.data?.cursos) {
           const cursos = gacetaRes.data.cursos
-            .filter(
-              (c: any) =>
-                c.det_estado === '1' &&
-                c.tipo_curso_otro
-            )
+            .filter((c: any) => c.det_estado === "1" && c.tipo_curso_otro)
             .map((c: any) => ({
               id: Number(c.iddetalle_cursos_academicos),
               nombre: sanitizeText(c.det_titulo),
-              url: `/cursos/${Number(
-                c.iddetalle_cursos_academicos
-              )}`,
+              url: `/cursos/${Number(c.iddetalle_cursos_academicos)}`,
               tipo:
                 sanitizeText(
-                  c.tipo_curso_otro
-                    ?.tipo_conv_curso_nombre
-                ).toUpperCase() || 'CURSOS',
+                  c.tipo_curso_otro?.tipo_conv_curso_nombre,
+                ).toUpperCase() || "CURSOS",
             }));
 
           setCursosItems(cursos);
         }
 
-      if (gacetaRes?.data?.convocatorias){
-          const comunicados =
-            gacetaRes.data.convocatorias
-              .filter(
-                (c: any) =>
-                  c.con_estado === '1' &&
-                  c.tipo_conv_comun
-              )
-              .map((c: any) => ({
-                id: Number(c.idconvocatorias),
-                titulo: sanitizeText(c.con_titulo),
-                url: `/comunicados/${Number(
-                  c.idconvocatorias
-                )}`,
-                tipo:
-                  sanitizeText(
-                    c.tipo_conv_comun
-                      ?.tipo_conv_comun_titulo
-                  ).toUpperCase() || 'COMUNICADOS',
-              }));
+        if (gacetaRes?.data?.convocatorias) {
+          const comunicados = gacetaRes.data.convocatorias
+            .filter((c: any) => c.con_estado === "1" && c.tipo_conv_comun)
+            .map((c: any) => ({
+              id: Number(c.idconvocatorias),
+              titulo: sanitizeText(c.con_titulo),
+              url: `/comunicados/${Number(c.idconvocatorias)}`,
+              tipo:
+                sanitizeText(
+                  c.tipo_conv_comun?.tipo_conv_comun_titulo,
+                ).toUpperCase() || "COMUNICADOS",
+            }));
 
           setComunicadosItems(comunicados);
         }
       } catch (err: any) {
         if (isMounted) {
           const msg =
-            process.env.NODE_ENV === 'development'
-              ? err?.message || 'Error cargando datos'
-              : 'No se pudo cargar el menú';
+            process.env.NODE_ENV === "development"
+              ? err?.message || "Error cargando datos"
+              : "No se pudo cargar el menú";
 
           setError(msg);
 
-          console.warn('Header API Error:', err);
+          console.warn("Header API Error:", err);
         }
       } finally {
         if (isMounted) setLoading(false);
@@ -330,17 +303,14 @@ if (recursosRes?.data?.linksExternoInterno) {
 
   useEffect(() => {
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem("auth_token");
 
-      const userData = localStorage.getItem('user_data');
+      const userData = localStorage.getItem("user_data");
 
       if (token && userData) {
         const parsedUser = JSON.parse(userData);
 
-        if (
-          parsedUser &&
-          typeof parsedUser === 'object'
-        ) {
+        if (parsedUser && typeof parsedUser === "object") {
           setUsuario(parsedUser);
         }
       }
@@ -376,20 +346,17 @@ if (recursosRes?.data?.linksExternoInterno) {
   };
 
   const toggleDropdown = (name: string) => {
-    setOpenDropdown(
-      openDropdown === name ? null : name
-    );
+    setOpenDropdown(openDropdown === name ? null : name);
   };
 
-  const getComunicadosByTipo = (
-    tipo: ComunicadoItem['tipo']
-  ) => comunicadosItems.filter((c) => c.tipo === tipo);
+  const getComunicadosByTipo = (tipo: ComunicadoItem["tipo"]) =>
+    comunicadosItems.filter((c) => c.tipo === tipo);
 
   const handleLogout = () => {
     try {
-      localStorage.removeItem('auth_token');
+      localStorage.removeItem("auth_token");
 
-      localStorage.removeItem('user_data');
+      localStorage.removeItem("user_data");
     } catch {
       // silent
     }
@@ -398,13 +365,10 @@ if (recursosRes?.data?.linksExternoInterno) {
 
     setUserMenuOpen(false);
 
-    window.location.href = '/';
+    window.location.href = "/";
   };
 
-  const handleLinkClick = (
-    isMobile: boolean,
-    isExternal: boolean = false
-  ) => {
+  const handleLinkClick = (isMobile: boolean, isExternal: boolean = false) => {
     if (isMobile) setMobileMenuOpen(false);
 
     if (!isExternal) {
@@ -413,68 +377,64 @@ if (recursosRes?.data?.linksExternoInterno) {
   };
 
   const menuItems: MenuItem[] = [
-    { label: 'Inicio', href: '/' },
+    { label: "Inicio", href: "/" },
     {
-      label: 'Información',
+      label: "Información",
       items: [
         {
-          label: 'Misión y Visión',
-          href: '/informacion?section=mision-vision',
+          label: "Misión y Visión",
+          href: "/informacion?section=mision-vision",
         },
         {
-          label: 'Autoridades',
-          href: '/informacion?section=autoridades',
+          label: "Autoridades",
+          href: "/informacion?section=autoridades",
         },
         {
-          label: 'Historia',
-          href: '/informacion?section=historia',
+          label: "Historia",
+          href: "/informacion?section=historia",
         },
         {
-          label: 'Ubicación',
-          href: '/informacion?section=ubicacion',
+          label: "Ubicación",
+          href: "/informacion?section=ubicacion",
         },
       ],
     },
-    { label: 'Cursos', href: '/cursos' },
+    { label: "Cursos", href: "/cursos" },
     {
-      label: 'Comunicados',
+      label: "Comunicados",
       items: [
         {
-          label: `Convocatorias (${getComunicadosByTipo(
-            'CONVOCATORIAS'
-          ).length})`,
-          href: '/comunicados?tipo=CONVOCATORIAS',
+          label: `Convocatorias (${
+            getComunicadosByTipo("CONVOCATORIAS").length
+          })`,
+          href: "/comunicados?tipo=CONVOCATORIAS",
         },
         {
-          label: `Avisos (${getComunicadosByTipo(
-            'AVISOS'
-          ).length})`,
-          href: '/comunicados?tipo=AVISOS',
+          label: `Avisos (${getComunicadosByTipo("AVISOS").length})`,
+          href: "/comunicados?tipo=AVISOS",
         },
         {
-          label: `Comunicados (${getComunicadosByTipo(
-            'COMUNICADOS'
-          ).length})`,
-          href: '/comunicados?tipo=COMUNICADOS',
+          label: `Comunicados (${getComunicadosByTipo("COMUNICADOS").length})`,
+          href: "/comunicados?tipo=COMUNICADOS",
         },
       ],
     },
     {
-      label: 'Instituto de Investigación',
-      href: '/institutoInvestigacion',
+      label: "Instituto de Investigación",
+      href: "/institutoInvestigacion",
     },
     {
-      label: 'Más',
+      label: "Más",
       items: [
-        { label: 'Publicaciones', href: '/publicaciones' },
-        { label: 'Eventos', href: '/eventos' },
-        { label: 'Gacetas', href: '/gacetas' },
-        { label: 'Videos', href: '/videos' },
-        { label: 'Contacto', href: '/contacto' },
-        { label: 'Sedes', href: '/sedes' },
+        { label: "Publicaciones", href: "/publicaciones" },
+        { label: "Eventos", href: "/eventos" },
+        { label: "Gacetas", href: "/gacetas" },
+        { label: "Videos", href: "/videos" },
+        { label: "Contacto", href: "/contacto" },
+        { label: "Sedes", href: "/sedes" },
         {
-          label: '─'.repeat(20),
-          href: '#',
+          label: "─".repeat(20),
+          href: "#",
           separator: true,
         },
         ...(enlacesItems.length > 0
@@ -485,13 +445,13 @@ if (recursosRes?.data?.linksExternoInterno) {
             }))
           : [
               {
-                label: 'Campus Virtual',
-                href: '#',
+                label: "Campus Virtual",
+                href: "#",
                 external: true,
               },
               {
-                label: 'Biblioteca',
-                href: '#',
+                label: "Biblioteca",
+                href: "#",
                 external: true,
               },
             ]),
@@ -502,27 +462,16 @@ if (recursosRes?.data?.linksExternoInterno) {
   const logoUrl = institucion?.institucion_logo;
 
   const institucionNombre =
-    sanitizeText(institucion?.institucion_nombre) ||
-    'UPEA';
+    sanitizeText(institucion?.institucion_nombre) || "UPEA";
 
   const institucionIniciales =
-    sanitizeText(
-      institucion?.institucion_iniciales
-    ) || '';
-  const renderDropdownItems = (
-    items: MenuItem['items'],
-    isMobile = false
-  ) => {
+    sanitizeText(institucion?.institucion_iniciales) || "";
+  const renderDropdownItems = (items: MenuItem["items"], isMobile = false) => {
     if (!items) return null;
 
     return items.map((item: any, idx: number) => {
       if (item.separator) {
-        return (
-          <div
-            key={idx}
-            className={`my-1 border-t ${borderColor}`}
-          />
-        );
+        return <div key={idx} className={`my-1 border-t ${borderColor}`} />;
       }
 
       if (item.external && isValidUrl(item.href)) {
@@ -551,7 +500,7 @@ if (recursosRes?.data?.linksExternoInterno) {
       return (
         <Link
           key={idx}
-          href={item.href || '#'}
+          href={item.href || "#"}
           className={`block px-4 py-2.5 text-sm transition-colors ${dropdownText}`}
           onClick={() => handleLinkClick(isMobile)}
         >
@@ -596,9 +545,7 @@ if (recursosRes?.data?.linksExternoInterno) {
     return (
       <header className="fixed top-0 left-0 right-0 z-50 p-4">
         <nav className="max-w-7xl mx-auto bg-red-50 border border-red-200 rounded-3xl px-6 py-3">
-          <p className="text-sm text-red-600 text-center">
-            {error}
-          </p>
+          <p className="text-sm text-red-600 text-center">{error}</p>
         </nav>
       </header>
     );
@@ -609,7 +556,7 @@ if (recursosRes?.data?.linksExternoInterno) {
       className="fixed top-0 left-0 right-0 z-50 p-4 lg:p-6 transition-colors duration-300"
       style={
         {
-          '--nav-bg': `${tertiaryColor}15`,
+          "--nav-bg": `${tertiaryColor}15`,
         } as React.CSSProperties
       }
     >
@@ -617,17 +564,25 @@ if (recursosRes?.data?.linksExternoInterno) {
         className="max-w-7xl mx-auto backdrop-blur-md border rounded-3xl shadow-lg transition-colors duration-300"
         style={{
           backgroundColor: isLightBackground
-            ? 'rgba(255,255,255,0.85)'
+            ? "rgba(255,255,255,0.85)"
             : `${tertiaryColor}80`,
           borderColor: isLightBackground
-            ? 'rgba(0,0,0,0.1)'
-            : 'rgba(255,255,255,0.15)',
+            ? "rgba(0,0,0,0.1)"
+            : "rgba(255,255,255,0.15)",
         }}
       >
         <div className="flex items-center justify-between h-20 px-4 lg:px-8">
           <Link
             href="/"
-            className="flex items-center gap-3 group flex-shrink-0"
+            className="
+    flex
+    items-center
+    gap-3
+    group
+    flex-shrink-0
+    min-w-0
+    max-w-[420px]
+  "
           >
             <div className="relative w-10 h-10 lg:w-12 lg:h-12 bg-white rounded-xl shadow-md overflow-hidden flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105">
               {logoUrl ? (
@@ -639,10 +594,9 @@ if (recursosRes?.data?.linksExternoInterno) {
                   className="object-contain p-1.5"
                   loading="eager"
                   onError={(e) => {
-                    const target =
-                      e.target as HTMLImageElement;
+                    const target = e.target as HTMLImageElement;
 
-                    target.style.display = 'none';
+                    target.style.display = "none";
 
                     if (target.parentElement) {
                       target.parentElement.innerHTML = `
@@ -656,22 +610,35 @@ if (recursosRes?.data?.linksExternoInterno) {
                   }}
                 />
               ) : (
-                <BookOpen
-                  className={`w-6 h-6 ${textColorDimmed}`}
-                />
+                <BookOpen className={`w-6 h-6 ${textColorDimmed}`} />
               )}
             </div>
 
-            <div className="hidden lg:block">
+            <div className="hidden lg:flex flex-col min-w-0 max-w-[340px]">
               <h1
-                className={`font-serif text-lg font-medium leading-tight ${textColor} transition-colors`}
+                className={`
+      font-serif
+      text-lg
+      font-medium
+      leading-tight
+      ${textColor}
+      transition-colors
+      break-words
+      whitespace-normal
+      overflow-visible
+    `}
               >
                 {institucionNombre}
               </h1>
 
               {institucionIniciales && (
                 <p
-                  className={`text-xs ${textColorMuted} font-medium`}
+                  className={`
+        text-xs
+        font-medium
+        ${textColorMuted}
+        truncate
+      `}
                 >
                   {institucionIniciales}
                 </p>
@@ -682,20 +649,13 @@ if (recursosRes?.data?.linksExternoInterno) {
           {/* Navegación Desktop */}
           <nav className="hidden lg:flex items-center gap-1 flex-1 justify-center">
             {menuItems.map((item) => (
-              <div
-                key={item.label}
-                className="relative"
-              >
+              <div key={item.label} className="relative">
                 {item.href ? (
                   <Link
                     href={item.href}
                     className={`px-4 py-2.5 text-sm font-medium transition-colors rounded-lg ${textColor} ${textColorHover} ${hoverBg}`}
-                    onMouseEnter={() =>
-                      handleDropdownLeave()
-                    }
-                    onClick={() =>
-                      handleLinkClick(false)
-                    }
+                    onMouseEnter={() => handleDropdownLeave()}
+                    onClick={() => handleLinkClick(false)}
                   >
                     {item.label}
                   </Link>
@@ -703,56 +663,34 @@ if (recursosRes?.data?.linksExternoInterno) {
                   <>
                     <button
                       className={`px-4 py-2.5 text-sm font-medium transition-colors flex items-center gap-1 rounded-lg ${textColor} ${textColorHover} ${hoverBg}`}
-                      onMouseEnter={() =>
-                        handleDropdownEnter(
-                          item.label
-                        )
-                      }
-                      onMouseLeave={
-                        handleDropdownLeave
-                      }
-                      onClick={() =>
-                        toggleDropdown(item.label)
-                      }
-                      aria-expanded={
-                        openDropdown === item.label
-                      }
+                      onMouseEnter={() => handleDropdownEnter(item.label)}
+                      onMouseLeave={handleDropdownLeave}
+                      onClick={() => toggleDropdown(item.label)}
+                      aria-expanded={openDropdown === item.label}
                       aria-haspopup="true"
                     >
                       {item.label}
 
                       <ChevronDown
                         className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                          openDropdown === item.label
-                            ? 'rotate-180'
-                            : ''
+                          openDropdown === item.label ? "rotate-180" : ""
                         } ${textColorMuted}`}
                       />
                     </button>
 
-                    {item.items &&
-                      openDropdown === item.label && (
-                        <div
-                          role="menu"
-                          className={`absolute top-full left-0 mt-2 w-56 rounded-xl shadow-xl py-2 z-50 max-h-80 overflow-y-auto border ${borderColor}`}
-                          style={{
-                            backgroundColor:
-                              dropdownBg,
-                          }}
-                          onMouseEnter={() =>
-                            handleDropdownEnter(
-                              item.label
-                            )
-                          }
-                          onMouseLeave={
-                            handleDropdownLeave
-                          }
-                        >
-                          {renderDropdownItems(
-                            item.items
-                          )}
-                        </div>
-                      )}
+                    {item.items && openDropdown === item.label && (
+                      <div
+                        role="menu"
+                        className={`absolute top-full left-0 mt-2 w-56 rounded-xl shadow-xl py-2 z-50 max-h-80 overflow-y-auto border ${borderColor}`}
+                        style={{
+                          backgroundColor: dropdownBg,
+                        }}
+                        onMouseEnter={() => handleDropdownEnter(item.label)}
+                        onMouseLeave={handleDropdownLeave}
+                      >
+                        {renderDropdownItems(item.items)}
+                      </div>
+                    )}
                   </>
                 )}
               </div>
@@ -768,14 +706,8 @@ if (recursosRes?.data?.linksExternoInterno) {
                   style={{
                     borderColor: secondaryColor,
                   }}
-                  onClick={() =>
-                    setUserMenuOpen(
-                      !userMenuOpen
-                    )
-                  }
-                  onMouseEnter={() =>
-                    handleDropdownLeave()
-                  }
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  onMouseEnter={() => handleDropdownLeave()}
                   aria-haspopup="menu"
                   aria-expanded={userMenuOpen}
                 >
@@ -787,9 +719,7 @@ if (recursosRes?.data?.linksExternoInterno) {
 
                   <ChevronDown
                     className={`w-3 h-3 transition-transform ${
-                      userMenuOpen
-                        ? 'rotate-180'
-                        : ''
+                      userMenuOpen ? "rotate-180" : ""
                     } ${textColorMuted}`}
                   />
                 </button>
@@ -801,12 +731,8 @@ if (recursosRes?.data?.linksExternoInterno) {
                     style={{
                       backgroundColor: dropdownBg,
                     }}
-                    onMouseEnter={() =>
-                      setUserMenuOpen(true)
-                    }
-                    onMouseLeave={() =>
-                      setUserMenuOpen(false)
-                    }
+                    onMouseEnter={() => setUserMenuOpen(true)}
+                    onMouseLeave={() => setUserMenuOpen(false)}
                   >
                     <Link
                       href="/perfil"
@@ -832,16 +758,14 @@ if (recursosRes?.data?.linksExternoInterno) {
                       Dashboard
                     </Link>
 
-                    <div
-                      className={`my-1 border-t ${borderColor}`}
-                    />
+                    <div className={`my-1 border-t ${borderColor}`} />
 
                     <button
                       onClick={handleLogout}
                       className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
                         isLightBackground
-                          ? 'text-red-600 hover:bg-red-50'
-                          : 'text-red-400 hover:bg-white/10'
+                          ? "text-red-600 hover:bg-red-50"
+                          : "text-red-400 hover:bg-white/10"
                       }`}
                     >
                       Cerrar Sesión
@@ -857,11 +781,9 @@ if (recursosRes?.data?.linksExternoInterno) {
                 className="group relative inline-flex items-center gap-2 px-4 lg:px-5 py-2.5 rounded-full font-semibold text-xs overflow-hidden transition-all hover:shadow-xl hover:-translate-y-0.5 flex-shrink-0"
                 style={{
                   backgroundColor: secondaryColor,
-                  color: '#ffffff',
+                  color: "#ffffff",
                 }}
-                onMouseEnter={() =>
-                  handleDropdownLeave()
-                }
+                onMouseEnter={() => handleDropdownLeave()}
               >
                 <LogIn className="w-4 h-4 relative z-10" />
 
@@ -869,9 +791,7 @@ if (recursosRes?.data?.linksExternoInterno) {
                   Iniciar Sesión
                 </span>
 
-                <span className="relative z-10 sm:hidden">
-                  Login
-                </span>
+                <span className="relative z-10 sm:hidden">Login</span>
               </a>
             )}
 
@@ -879,17 +799,11 @@ if (recursosRes?.data?.linksExternoInterno) {
             <button
               className={`lg:hidden p-2.5 rounded-xl transition-colors ${textColor} ${hoverBg}`}
               onClick={() => {
-                setMobileMenuOpen(
-                  !mobileMenuOpen
-                );
+                setMobileMenuOpen(!mobileMenuOpen);
 
                 setOpenDropdown(null);
               }}
-              aria-label={
-                mobileMenuOpen
-                  ? 'Cerrar menú'
-                  : 'Abrir menú'
-              }
+              aria-label={mobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
               aria-expanded={mobileMenuOpen}
             >
               {mobileMenuOpen ? (
@@ -907,11 +821,11 @@ if (recursosRes?.data?.linksExternoInterno) {
             className="lg:hidden border-t px-4 pb-4 pt-2 space-y-1 max-h-[75vh] overflow-y-auto"
             style={{
               backgroundColor: isLightBackground
-                ? 'rgba(255,255,255,0.95)'
+                ? "rgba(255,255,255,0.95)"
                 : `${tertiaryColor}F5`,
               borderColor: isLightBackground
-                ? 'rgba(0,0,0,0.1)'
-                : 'rgba(255,255,255,0.15)',
+                ? "rgba(0,0,0,0.1)"
+                : "rgba(255,255,255,0.15)",
             }}
           >
             {menuItems.map((item) => (
@@ -923,9 +837,7 @@ if (recursosRes?.data?.linksExternoInterno) {
                   <Link
                     href={item.href}
                     className={`block px-4 py-3 text-sm font-medium rounded-xl ${textColor} ${hoverBg}`}
-                    onClick={() =>
-                      setMobileMenuOpen(false)
-                    }
+                    onClick={() => setMobileMenuOpen(false)}
                   >
                     {item.label}
                   </Link>
@@ -933,62 +845,41 @@ if (recursosRes?.data?.linksExternoInterno) {
                   <>
                     <button
                       className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-xl ${textColor} ${hoverBg}`}
-                      onClick={() =>
-                        toggleDropdown(item.label)
-                      }
-                      aria-expanded={
-                        openDropdown === item.label
-                      }
+                      onClick={() => toggleDropdown(item.label)}
+                      aria-expanded={openDropdown === item.label}
                     >
                       <span>{item.label}</span>
 
                       <ChevronDown
                         className={`w-4 h-4 transition-transform ${
-                          openDropdown === item.label
-                            ? 'rotate-180'
-                            : ''
+                          openDropdown === item.label ? "rotate-180" : ""
                         } ${textColorMuted}`}
                       />
                     </button>
 
-                    {openDropdown === item.label &&
-                      item.items && (
-                        <div
-                          className="ml-4 mt-1 space-y-1 pb-2"
-                          role="menu"
-                        >
-                          {renderDropdownItems(
-                            item.items,
-                            true
-                          )}
-                        </div>
-                      )}
+                    {openDropdown === item.label && item.items && (
+                      <div className="ml-4 mt-1 space-y-1 pb-2" role="menu">
+                        {renderDropdownItems(item.items, true)}
+                      </div>
+                    )}
                   </>
                 )}
               </div>
             ))}
 
-            <div
-              className={`pt-3 border-t ${borderColor}`}
-            >
+            <div className={`pt-3 border-t ${borderColor}`}>
               {usuario ? (
                 <div className="space-y-2">
                   <div
                     className={`px-4 py-3 rounded-xl ${
-                      isLightBackground
-                        ? 'bg-gray-100'
-                        : 'bg-white/10'
+                      isLightBackground ? "bg-gray-100" : "bg-white/10"
                     }`}
                   >
-                    <p
-                      className={`text-sm font-medium ${textColor}`}
-                    >
+                    <p className={`text-sm font-medium ${textColor}`}>
                       {usuario.nombre}
                     </p>
 
-                    <p
-                      className={`text-xs ${textColorMuted} truncate`}
-                    >
+                    <p className={`text-xs ${textColorMuted} truncate`}>
                       {usuario.email}
                     </p>
                   </div>
@@ -996,22 +887,20 @@ if (recursosRes?.data?.linksExternoInterno) {
                   <Link
                     href="/perfil"
                     className={`block px-4 py-3 text-sm rounded-xl ${textColor} ${hoverBg}`}
-                    onClick={() =>
-                      setMobileMenuOpen(false)
-                    }
+                    onClick={() => setMobileMenuOpen(false)}
                   >
-                    👤 Mi Perfil
+                    Mi Perfil
                   </Link>
 
                   <button
                     onClick={handleLogout}
                     className={`w-full text-left px-4 py-3 text-sm rounded-xl ${
                       isLightBackground
-                        ? 'text-red-600 hover:bg-red-50'
-                        : 'text-red-400 hover:bg-white/10'
+                        ? "text-red-600 hover:bg-red-50"
+                        : "text-red-400 hover:bg-white/10"
                     }`}
                   >
-                    🚪 Cerrar Sesión
+                    Cerrar Sesión
                   </button>
                 </div>
               ) : (
@@ -1022,14 +911,11 @@ if (recursosRes?.data?.linksExternoInterno) {
                   className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-full font-semibold text-sm"
                   style={{
                     backgroundColor: secondaryColor,
-                    color: '#ffffff',
+                    color: "#ffffff",
                   }}
-                  onClick={() =>
-                    setMobileMenuOpen(false)
-                  }
+                  onClick={() => setMobileMenuOpen(false)}
                 >
                   <LogIn className="w-4 h-4" />
-
                   Iniciar Sesión
                 </a>
               )}

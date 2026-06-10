@@ -1,12 +1,12 @@
 // components/hero-section.tsx
-"use client"
+"use client";
 
-import { useEffect, useRef, useState, useCallback, memo } from "react"
-import Link from "next/link"
-import api from "@/lib/axios"
+import { useEffect, useRef, useState, useCallback, memo } from "react";
+import Link from "next/link";
+import api from "@/lib/axios";
 
-import { Button } from "@/components/ui/button"
-import { AnimatedText } from "@/components/animated-text"
+import { Button } from "@/components/ui/button";
+import { AnimatedText } from "@/components/animated-text";
 
 import {
   ArrowRight,
@@ -15,124 +15,117 @@ import {
   GraduationCap,
   BookOpen,
   Microscope,
-} from "lucide-react"
+} from "lucide-react";
 
-import { getStorageUrl } from "@/lib/utils"
-import { extractPlainText } from "@/lib/sanitize"
+import { getStorageUrl } from "@/lib/utils";
+import { extractPlainText } from "@/lib/utils";
 
 interface Portada {
-  portada_id: number
-  portada_imagen: string
-  portada_titulo: string
-  portada_subtitulo: string
+  portada_id: number;
+  portada_imagen: string;
+  portada_titulo: string;
+  portada_subtitulo: string;
 }
 
 interface ColorInstitucion {
-  color_primario: string
-  color_secundario: string
-  color_terciario: string
+  color_primario: string;
+  color_secundario: string;
+  color_terciario: string;
 }
 
 interface Institucion {
-  institucion_nombre?: string | null
-  institucion_iniciales?: string | null
-  institucion_logo?: string
+  institucion_nombre?: string | null;
+  institucion_iniciales?: string | null;
+  institucion_logo?: string;
 
-  colorinstitucion?: ColorInstitucion[]
+  colorinstitucion?: ColorInstitucion[];
 }
 
 interface HeroData {
-  portadas: Portada[]
-  institucion: Institucion | null
+  portadas: Portada[];
+  institucion: Institucion | null;
 }
 
 interface HeroProps {
-  data: HeroData
-  currentSlide: number
-  currentPortada?: Portada
-  primaryColor: string
-  secondaryColor: string
-  tertiaryColor: string
-  nextSlide: () => void
-  prevSlide: () => void
-  goToSlide: (index: number) => void
-  scale: number
-  borderRadius: number
-  sectionRef: React.RefObject<HTMLElement | null>
+  data: HeroData;
+  currentSlide: number;
+  currentPortada?: Portada;
+  primaryColor: string;
+  secondaryColor: string;
+  tertiaryColor: string;
+  nextSlide: () => void;
+  prevSlide: () => void;
+  goToSlide: (index: number) => void;
+  scale: number;
+  borderRadius: number;
+  sectionRef: React.RefObject<HTMLElement | null>;
 }
 
-const DEFAULT_PRIMARY = "#04246C"
-const DEFAULT_SECONDARY = "#FC0102"
-const DEFAULT_TERTIARY = "#020733"
+const DEFAULT_PRIMARY = "#04246C";
+const DEFAULT_SECONDARY = "#FC0102";
+const DEFAULT_TERTIARY = "#020733";
 
 const isValidHexColor = (color?: string): boolean => {
-  if (!color) return false
-  return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(color)
-}
+  if (!color) return false;
+  return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(color);
+};
 
-const getSafeColor = (
-  color: string | undefined,
-  fallback: string
-): string => {
-  return isValidHexColor(color) ? color! : fallback
-}
+const getSafeColor = (color: string | undefined, fallback: string): string => {
+  return isValidHexColor(color) ? color! : fallback;
+};
 
 const sanitizeImageUrl = (url?: string): string | null => {
-  if (!url || typeof url !== "string") return null
+  if (!url || typeof url !== "string") return null;
 
   try {
     if (url.startsWith("http")) {
-      const parsed = new URL(url)
+      const parsed = new URL(url);
 
       const allowedHosts = [
         "apiadministrador.upea.bo",
         "archivosminio.upea.bo",
-      ]
+      ];
 
       if (!allowedHosts.includes(parsed.hostname)) {
-        return null
+        return null;
       }
 
-      return parsed.toString()
+      return parsed.toString();
     }
 
-    return getStorageUrl(url)
+    return getStorageUrl(url);
   } catch {
-    return null
+    return null;
   }
-}
+};
 
 export function HeroSection() {
-  const sectionRef = useRef<HTMLElement>(null)
+  const sectionRef = useRef<HTMLElement>(null);
 
-  const [scrollProgress, setScrollProgress] = useState(0)
-  const [currentSlide, setCurrentSlide] = useState(0)
-  const [isTransitioning, setIsTransitioning] = useState(false)
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const [data, setData] = useState<HeroData>({
     portadas: [],
     institucion: null,
-  })
+  });
 
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // =========================
   // ID DESDE ENV
   // =========================
 
-  const institucionId = Number(
-    process.env.NEXT_PUBLIC_INSTITUCION_ID
-  )
+  const institucionId = Number(process.env.NEXT_PUBLIC_INSTITUCION_ID);
 
   // =========================
   // VALIDACIÓN SEGURA
   // =========================
 
   const safeInstitucionId =
-    Number.isInteger(institucionId) && institucionId > 0
-      ? institucionId
-      : 12
+    Number.isInteger(institucionId) && institucionId > 0 ? institucionId : 12;
 
   // =========================
   // FETCH
@@ -141,30 +134,29 @@ export function HeroSection() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true)
-        setError(null)
+        setLoading(true);
+        setError(null);
 
         const [contenidoRes, instRes] = await Promise.all([
           api.get(`/institucion/${safeInstitucionId}/contenido`),
           api.get(`/institucionesPrincipal/${safeInstitucionId}`),
-        ])
+        ]);
 
         setData({
           portadas: Array.isArray(contenidoRes?.data?.portada)
             ? contenidoRes.data.portada
             : [],
           institucion: instRes?.data?.Descripcion || null,
-        })
-      } catch (err: any) {
-        console.error(err)
-        setError("No se pudo cargar la portada institucional.")
+        });
+      } catch {
+        setError("No se pudo cargar la portada institucional.");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchData()
-  }, [safeInstitucionId])
+    fetchData();
+  }, [safeInstitucionId]);
 
   // =========================
   // SCROLL EFFECT
@@ -172,44 +164,38 @@ export function HeroSection() {
 
   useEffect(() => {
     const handleScroll = () => {
-      if (!sectionRef.current) return
+      if (!sectionRef.current) return;
 
-      const scrollY = window.scrollY
-      const sectionHeight = sectionRef.current.offsetHeight
+      const scrollY = window.scrollY;
+      const sectionHeight = sectionRef.current.offsetHeight;
 
-      const progress = Math.min(
-        scrollY / (sectionHeight * 0.5),
-        1
-      )
+      const progress = Math.min(scrollY / (sectionHeight * 0.5), 1);
 
-      setScrollProgress(progress)
-    }
+      setScrollProgress(progress);
+    };
 
     window.addEventListener("scroll", handleScroll, {
       passive: true,
-    })
+    });
 
-    handleScroll()
+    handleScroll();
 
-    return () =>
-      window.removeEventListener("scroll", handleScroll)
-  }, [])
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // =========================
   // AUTOPLAY
   // =========================
 
   useEffect(() => {
-    if (data.portadas.length <= 1) return
+    if (data.portadas.length <= 1) return;
 
     const interval = setInterval(() => {
-      setCurrentSlide((prev) =>
-        (prev + 1) % data.portadas.length
-      )
-    }, 5000)
+      setCurrentSlide((prev) => (prev + 1) % data.portadas.length);
+    }, 5000);
 
-    return () => clearInterval(interval)
-  }, [data.portadas.length])
+    return () => clearInterval(interval);
+  }, [data.portadas.length]);
 
   // =========================
   // SLIDER CONTROLS
@@ -217,61 +203,52 @@ export function HeroSection() {
 
   const goToSlide = useCallback(
     (index: number) => {
-      if (isTransitioning) return
+      if (isTransitioning) return;
 
-      setIsTransitioning(true)
-      setCurrentSlide(index)
+      setIsTransitioning(true);
+      setCurrentSlide(index);
 
       setTimeout(() => {
-        setIsTransitioning(false)
-      }, 600)
+        setIsTransitioning(false);
+      }, 600);
     },
-    [isTransitioning]
-  )
+    [isTransitioning],
+  );
 
   const nextSlide = useCallback(() => {
-    goToSlide(
-      (currentSlide + 1) % data.portadas.length
-    )
-  }, [currentSlide, data.portadas.length, goToSlide])
+    goToSlide((currentSlide + 1) % data.portadas.length);
+  }, [currentSlide, data.portadas.length, goToSlide]);
 
   const prevSlide = useCallback(() => {
-    goToSlide(
-      (currentSlide - 1 + data.portadas.length) %
-        data.portadas.length
-    )
-  }, [currentSlide, data.portadas.length, goToSlide])
+    goToSlide((currentSlide - 1 + data.portadas.length) % data.portadas.length);
+  }, [currentSlide, data.portadas.length, goToSlide]);
 
   // =========================
   // COLORS
   // =========================
 
-  const colores = data.institucion?.colorinstitucion?.[0]
+  const colores = data.institucion?.colorinstitucion?.[0];
 
-  const primaryColor = getSafeColor(
-    colores?.color_primario,
-    DEFAULT_PRIMARY
-  )
+  const primaryColor = getSafeColor(colores?.color_primario, DEFAULT_PRIMARY);
 
   const secondaryColor = getSafeColor(
     colores?.color_secundario,
-    DEFAULT_SECONDARY
-  )
+    DEFAULT_SECONDARY,
+  );
 
   const tertiaryColor = getSafeColor(
     colores?.color_terciario,
-    DEFAULT_TERTIARY
-  )
+    DEFAULT_TERTIARY,
+  );
 
   // =========================
   // CURRENT SLIDE
   // =========================
 
-  const currentPortada =
-    data.portadas[currentSlide]
+  const currentPortada = data.portadas[currentSlide];
 
-  const scale = 1 - scrollProgress * 0.05
-  const borderRadius = scrollProgress * 24
+  const scale = 1 - scrollProgress * 0.05;
+  const borderRadius = scrollProgress * 24;
 
   // =========================
   // STATES
@@ -282,38 +259,26 @@ export function HeroSection() {
       <section className="relative min-h-screen flex items-center justify-center bg-slate-100">
         <div className="text-center">
           <div className="w-14 h-14 rounded-full border-4 border-slate-300 border-t-slate-800 animate-spin mx-auto mb-5" />
-          <p className="text-slate-600">
-            Cargando portada institucional...
-          </p>
+          <p className="text-slate-600">Cargando portada institucional...</p>
         </div>
       </section>
-    )
+    );
   }
 
   if (error) {
     return (
       <section className="relative min-h-screen flex items-center justify-center bg-slate-100 px-6">
         <div className="max-w-md text-center">
-          <div className="text-6xl mb-4">
-            
-          </div>
+          <div className="text-6xl mb-4"></div>
 
-          <h2 className="text-2xl font-bold mb-4">
-            Error de conexión
-          </h2>
+          <h2 className="text-2xl font-bold mb-4">Error de conexión</h2>
 
-          <p className="text-slate-600 mb-6">
-            {error}
-          </p>
+          <p className="text-slate-600 mb-6">{error}</p>
 
-          <Button
-            onClick={() => window.location.reload()}
-          >
-            Reintentar
-          </Button>
+          <Button onClick={() => window.location.reload()}>Reintentar</Button>
         </div>
       </section>
-    )
+    );
   }
 
   // =========================
@@ -336,7 +301,7 @@ export function HeroSection() {
         borderRadius={borderRadius}
         sectionRef={sectionRef}
       />
-    )
+    );
   }
 
   // =========================
@@ -358,7 +323,7 @@ export function HeroSection() {
       borderRadius={borderRadius}
       sectionRef={sectionRef}
     />
-  )
+  );
 }
 
 // ======================================================
@@ -378,13 +343,12 @@ const HeroDefault = memo(function HeroDefault({
   sectionRef,
 }: HeroProps) {
   const institucionNombre = extractPlainText(
-    data.institucion?.institucion_nombre || ""
-  ).slice(0, 100)
+    data.institucion?.institucion_nombre || "",
+  ).slice(0, 100);
 
-  const institucionIniciales =
-    extractPlainText(
-      data.institucion?.institucion_iniciales || ""
-    ).slice(0, 20)
+  const institucionIniciales = extractPlainText(
+    data.institucion?.institucion_iniciales || "",
+  ).slice(0, 20);
 
   return (
     <section
@@ -402,15 +366,11 @@ const HeroDefault = memo(function HeroDefault({
           <div
             className="flex h-full transition-transform duration-700 ease-out"
             style={{
-              transform: `translateX(-${
-                currentSlide * 100
-              }%)`,
+              transform: `translateX(-${currentSlide * 100}%)`,
             }}
           >
             {data.portadas.map((portada) => {
-              const imageUrl = sanitizeImageUrl(
-                portada.portada_imagen
-              )
+              const imageUrl = sanitizeImageUrl(portada.portada_imagen);
 
               return (
                 <div
@@ -420,15 +380,13 @@ const HeroDefault = memo(function HeroDefault({
                   <div
                     className="absolute inset-0 bg-cover bg-center"
                     style={{
-                      backgroundImage: imageUrl
-                        ? `url('${imageUrl}')`
-                        : "none",
+                      backgroundImage: imageUrl ? `url('${imageUrl}')` : "none",
                     }}
                   />
 
                   <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
                 </div>
-              )
+              );
             })}
           </div>
         ) : (
@@ -447,8 +405,8 @@ const HeroDefault = memo(function HeroDefault({
             {institucionIniciales}
           </p>
 
-<h1
-  className="
+          <h1
+            className="
     font-serif
     text-7xl
     md:text-5xl
@@ -463,13 +421,11 @@ const HeroDefault = memo(function HeroDefault({
     break-words
     max-w-none
   "
->
-  {institucionNombre || "UPEA"}
+          >
+            {institucionNombre || "UPEA"}
 
-  <br />
-
-</h1>
-
+            <br />
+          </h1>
 
           <div className="flex flex-col sm:flex-row gap-4">
             <Link href="/cursos">
@@ -481,7 +437,6 @@ const HeroDefault = memo(function HeroDefault({
                 }}
               >
                 Explorar Cursos
-
                 <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             </Link>
@@ -522,15 +477,10 @@ const HeroDefault = memo(function HeroDefault({
                 onClick={() => goToSlide(index)}
                 className="rounded-full transition-all duration-300 bg-white/40"
                 style={{
-                  width:
-                    currentSlide === index
-                      ? "32px"
-                      : "8px",
+                  width: currentSlide === index ? "32px" : "8px",
                   height: "4px",
                   backgroundColor:
-                    currentSlide === index
-                      ? primaryColor
-                      : undefined,
+                    currentSlide === index ? primaryColor : undefined,
                 }}
               />
             ))}
@@ -538,86 +488,79 @@ const HeroDefault = memo(function HeroDefault({
         </>
       )}
     </section>
-  )
-})
+  );
+});
 
 // ======================================================
 // HERO NUEVO SOLO PARA ID 34
 // ======================================================
 
-const HeroLaboratorioDental = memo(
-  function HeroLaboratorioDental({
-    data,
-    currentSlide,
-    currentPortada,
-    primaryColor,
-    secondaryColor,
-    tertiaryColor,
-    nextSlide,
-    prevSlide,
-    goToSlide,
-    sectionRef,
-  }: HeroProps) {
-    const institucionNombre =
-      extractPlainText(
-        data.institucion?.institucion_nombre || ""
-      ).slice(0, 100) || "LABORATORIO DENTAL"
+const HeroLaboratorioDental = memo(function HeroLaboratorioDental({
+  data,
+  currentSlide,
+  currentPortada,
+  primaryColor,
+  secondaryColor,
+  tertiaryColor,
+  nextSlide,
+  prevSlide,
+  goToSlide,
+  sectionRef,
+}: HeroProps) {
+  const institucionNombre =
+    extractPlainText(data.institucion?.institucion_nombre || "").slice(
+      0,
+      100,
+    ) || "LABORATORIO DENTAL";
 
-    const imageUrl = sanitizeImageUrl(
-      currentPortada?.portada_imagen
-    )
+  const imageUrl = sanitizeImageUrl(currentPortada?.portada_imagen);
 
-    return (
-      <section
-        ref={sectionRef}
-        className="relative min-h-screen overflow-hidden"
-      >
-        {/* BACKGROUND */}
-        <div className="absolute inset-0">
-          {imageUrl && (
-            <div
-              className="absolute inset-0 bg-cover bg-center transition-all duration-1000 scale-105"
-              style={{
-                backgroundImage: `url('${imageUrl}')`,
-              }}
-            />
-          )}
-
+  return (
+    <section ref={sectionRef} className="relative min-h-screen overflow-hidden">
+      {/* BACKGROUND */}
+      <div className="absolute inset-0">
+        {imageUrl && (
           <div
-          
-          />
-
-          {/* EFECTOS */}
-          <div
-            className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full blur-3xl opacity-30"
+            className="absolute inset-0 bg-cover bg-center transition-all duration-1000 scale-105"
             style={{
-              background: secondaryColor,
+              backgroundImage: `url('${imageUrl}')`,
             }}
           />
+        )}
 
-          <div
-            className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full blur-3xl opacity-20"
-            style={{
-              background: primaryColor,
-            }}
-          />
-        </div>
+        <div />
 
-        {/* GRID */}
-        <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 min-h-screen flex items-center py-24">
-          <div className="grid lg:grid-cols-2 gap-14 items-center w-full">
-            {/* LEFT */}
-            <div>
-              <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-xl text-white mb-8">
-                <GraduationCap className="w-5 h-5" />
+        {/* EFECTOS */}
+        <div
+          className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full blur-3xl opacity-30"
+          style={{
+            background: secondaryColor,
+          }}
+        />
 
-                <span className="text-sm tracking-wide">
-                  Formación Técnica Profesional
-                </span>
-              </div>
+        <div
+          className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full blur-3xl opacity-20"
+          style={{
+            background: primaryColor,
+          }}
+        />
+      </div>
 
-<h1
-  className="
+      {/* GRID */}
+      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 min-h-screen flex items-center py-24">
+        <div className="grid lg:grid-cols-2 gap-14 items-center w-full">
+          {/* LEFT */}
+          <div>
+            <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-xl text-white mb-8">
+              <GraduationCap className="w-5 h-5" />
+
+              <span className="text-sm tracking-wide">
+                Formación Técnica Profesional
+              </span>
+            </div>
+
+            <h1
+              className="
     text-5xl
     md:text-6xl
     xl:text-7xl
@@ -627,207 +570,181 @@ const HeroLaboratorioDental = memo(
     tracking-tight
     drop-shadow-[0_4px_18px_rgba(0,0,0,0.45)]
   "
-  style={{
-    WebkitTextStroke: "1px rgba(0,0,0,0.25)",
-    textShadow: `
+              style={{
+                WebkitTextStroke: "1px rgba(0,0,0,0.25)",
+                textShadow: `
       0 2px 10px rgba(0,0,0,0.35),
       0 4px 25px rgba(0,0,0,0.25)
     `,
-  }}
->
-                <AnimatedText
-                  text={institucionNombre}
-                  delay={0.2}
-                />
-              </h1>
+              }}
+            >
+              <AnimatedText text={institucionNombre} delay={0.2} />
+            </h1>
 
-              <div
-                className="w-28 h-1 rounded-full mt-8 mb-8"
-                style={{
-                  background: secondaryColor,
-                }}
-              />
+            <div
+              className="w-28 h-1 rounded-full mt-8 mb-8"
+              style={{
+                background: secondaryColor,
+              }}
+            />
 
-              <p className="text-lg md:text-xl text-white/80 leading-relaxed max-w-2xl">
-                {currentPortada?.portada_subtitulo
-                  ? extractPlainText(
-                      currentPortada.portada_subtitulo
-                    ).slice(0, 220)
-                  : "Innovación académica, excelencia científica y formación profesional de alto nivel."}
-              </p>
+            <p className="text-lg md:text-xl text-white/80 leading-relaxed max-w-2xl">
+              {currentPortada?.portada_subtitulo
+                ? extractPlainText(currentPortada.portada_subtitulo).slice(
+                    0,
+                    220,
+                  )
+                : "Innovación académica, excelencia científica y formación profesional de alto nivel."}
+            </p>
+          </div>
 
-            </div>
-
-            {/* RIGHT */}
-            <div className="hidden lg:block">
-              <div className="relative">
-                <div className="backdrop-blur-2xl bg-white/10 border border-white/20 rounded-[32px] p-10 shadow-2xl">
-                  <div className="grid grid-cols-2 gap-8">
-                    <div>
-                      <div
-                        className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
-                        style={{
-                          backgroundColor:
-                            primaryColor,
-                        }}
-                      >
-                        <Microscope className="text-white w-7 h-7" />
-                      </div>
-
-                      <h3 className="text-4xl font-bold text-white mb-2">
-                        +10
-                      </h3>
-
-                      <p className="text-white/70">
-                        Laboratorios especializados
-                      </p>
+          {/* RIGHT */}
+          <div className="hidden lg:block">
+            <div className="relative">
+              <div className="backdrop-blur-2xl bg-white/10 border border-white/20 rounded-[32px] p-10 shadow-2xl">
+                <div className="grid grid-cols-2 gap-8">
+                  <div>
+                    <div
+                      className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
+                      style={{
+                        backgroundColor: primaryColor,
+                      }}
+                    >
+                      <Microscope className="text-white w-7 h-7" />
                     </div>
 
-                    <div>
-                      <div
-                        className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
-                        style={{
-                          backgroundColor:
-                            secondaryColor,
-                        }}
-                      >
-                        <BookOpen className="text-white w-7 h-7" />
-                      </div>
+                    <h3 className="text-4xl font-bold text-white mb-2">+10</h3>
 
-                      <h3 className="text-4xl font-bold text-white mb-2">
-                        UPEA
-                      </h3>
-
-                      <p className="text-white/70">
-                        Excelencia Académica
-                      </p>
-                    </div>
+                    <p className="text-white/70">Laboratorios especializados</p>
                   </div>
 
-<div className="mt-10 pt-8 border-t border-white/10">
-  <div className="flex flex-col gap-6">
-    <div className="flex items-center justify-between gap-6">
-      <div className="min-w-0">
-        <p className="text-white/50 text-sm">
-          {institucionNombre}
-        </p>
+                  <div>
+                    <div
+                      className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
+                      style={{
+                        backgroundColor: secondaryColor,
+                      }}
+                    >
+                      <BookOpen className="text-white w-7 h-7" />
+                    </div>
 
-        <h4 className="text-white text-2xl font-bold mt-2 leading-tight break-words">
-          Formación Profesional
-        </h4>
-      </div>
+                    <h3 className="text-4xl font-bold text-white mb-2">UPEA</h3>
 
-<div className="w-30 h-30 rounded-2xl shrink-0 overflow-hidden border border-white/10 bg-white/10 backdrop-blur-sm flex items-center justify-center">
-  {(() => {
-    const logoUrl = sanitizeImageUrl(
-      data.institucion?.institucion_logo
-    )
+                    <p className="text-white/70">Excelencia Académica</p>
+                  </div>
+                </div>
 
-    return logoUrl ? (
-      <img
-        src={logoUrl}
-        alt={extractPlainText(
-          institucionNombre || "Institución"
-        )}
-        loading="lazy"
-        decoding="async"
-        referrerPolicy="no-referrer"
-        className="w-full h-full object-cover"
-        onError={(e) => {
-          const target =
-            e.currentTarget as HTMLImageElement
+                <div className="mt-10 pt-8 border-t border-white/10">
+                  <div className="flex flex-col gap-6">
+                    <div className="flex items-center justify-between gap-6">
+                      <div className="min-w-0">
+                        <p className="text-white/50 text-sm">
+                          {institucionNombre}
+                        </p>
 
-          target.style.display = "none"
-        }}
-      />
-    ) : (
-      <GraduationCap className="w-7 h-7 text-white/70" />
-    )
-  })()}
-</div>
-    </div>
+                        <h4 className="text-white text-2xl font-bold mt-2 leading-tight break-words">
+                          Formación Profesional
+                        </h4>
+                      </div>
 
-    <div className="flex flex-col sm:flex-row gap-4 pt-2">
-      <Link
-        href="/cursos"
-        prefetch={false}
-      >
-        <Button
-          size="lg"
-          className="w-full sm:w-auto rounded-2xl px-8 py-6 text-base font-semibold shadow-xl"
-          style={{
-            backgroundColor: secondaryColor,
-          }}
-        >
-          Explorar Cursos
+                      <div className="w-30 h-30 rounded-2xl shrink-0 overflow-hidden border border-white/10 bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                        {(() => {
+                          const logoUrl = sanitizeImageUrl(
+                            data.institucion?.institucion_logo,
+                          );
 
-          <ArrowRight className="ml-2 w-5 h-5" />
-        </Button>
-      </Link>
+                          return logoUrl ? (
+                            <img
+                              src={logoUrl}
+                              alt={extractPlainText(
+                                institucionNombre || "Institución",
+                              )}
+                              loading="lazy"
+                              decoding="async"
+                              referrerPolicy="no-referrer"
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target =
+                                  e.currentTarget as HTMLImageElement;
 
-      <Link
-        href="/comunicados"
-        prefetch={false}
-      >
-        <Button
-          size="lg"
-          variant="outline"
-          className="w-full sm:w-auto rounded-2xl px-8 py-6 text-base border-white/20 text-white bg-white/10 backdrop-blur-md hover:bg-white/20"
-        >
-          Ver Convocatorias
-        </Button>
-      </Link>
-    </div>
-  </div>
-</div>
+                                target.style.display = "none";
+                              }}
+                            />
+                          ) : (
+                            <GraduationCap className="w-7 h-7 text-white/70" />
+                          );
+                        })()}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-4 pt-2">
+                      <Link href="/cursos" prefetch={false}>
+                        <Button
+                          size="lg"
+                          className="w-full sm:w-auto rounded-2xl px-8 py-6 text-base font-semibold shadow-xl"
+                          style={{
+                            backgroundColor: secondaryColor,
+                          }}
+                        >
+                          Explorar Cursos
+                          <ArrowRight className="ml-2 w-5 h-5" />
+                        </Button>
+                      </Link>
+
+                      <Link href="/comunicados" prefetch={false}>
+                        <Button
+                          size="lg"
+                          variant="outline"
+                          className="w-full sm:w-auto rounded-2xl px-8 py-6 text-base border-white/20 text-white bg-white/10 backdrop-blur-md hover:bg-white/20"
+                        >
+                          Ver Convocatorias
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* CONTROLS */}
-        {data.portadas.length > 1 && (
-          <>
-            <button
-              onClick={prevSlide}
-              className="absolute left-6 top-1/2 -translate-y-1/2 z-30 p-4 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white hover:bg-white/20 transition-all"
-            >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
+      {/* CONTROLS */}
+      {data.portadas.length > 1 && (
+        <>
+          <button
+            onClick={prevSlide}
+            className="absolute left-6 top-1/2 -translate-y-1/2 z-30 p-4 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white hover:bg-white/20 transition-all"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </button>
 
-            <button
-              onClick={nextSlide}
-              className="absolute right-6 top-1/2 -translate-y-1/2 z-30 p-4 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white hover:bg-white/20 transition-all"
-            >
-              <ChevronRight className="w-6 h-6" />
-            </button>
+          <button
+            onClick={nextSlide}
+            className="absolute right-6 top-1/2 -translate-y-1/2 z-30 p-4 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white hover:bg-white/20 transition-all"
+          >
+            <ChevronRight className="w-6 h-6" />
+          </button>
 
-            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 flex gap-3">
-              {data.portadas.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() =>
-                    goToSlide(index)
-                  }
-                  className="transition-all duration-300 rounded-full"
-                  style={{
-                    width:
-                      currentSlide === index
-                        ? "36px"
-                        : "10px",
-                    height: "10px",
-                    backgroundColor:
-                      currentSlide === index
-                        ? secondaryColor
-                        : "rgba(255,255,255,0.4)",
-                  }}
-                />
-              ))}
-            </div>
-          </>
-        )}
-      </section>
-    )
-  }
-)
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 flex gap-3">
+            {data.portadas.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => goToSlide(index)}
+                className="transition-all duration-300 rounded-full"
+                style={{
+                  width: currentSlide === index ? "36px" : "10px",
+                  height: "10px",
+                  backgroundColor:
+                    currentSlide === index
+                      ? secondaryColor
+                      : "rgba(255,255,255,0.4)",
+                }}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </section>
+  );
+});

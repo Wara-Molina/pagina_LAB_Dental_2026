@@ -1,20 +1,13 @@
-import type React from "react"
-import type {
-  Metadata,
-  Viewport,
-} from "next"
+import type React from "react";
+import type { Metadata, Viewport } from "next";
 
-import {
-  DM_Sans,
-  Fraunces,
-} from "next/font/google"
+import { DM_Sans, Fraunces } from "next/font/google";
 
-import { Analytics } from "@vercel/analytics/react"
+import { Analytics } from "@vercel/analytics/react";
 
+import { InstitucionProvider } from "@/context/InstitucionContext";
 
-import { InstitucionProvider } from "@/context/InstitucionContext"
-
-import "./globals.css"
+import "./globals.css";
 
 /*
 |--------------------------------------------------------------------------
@@ -25,20 +18,18 @@ import "./globals.css"
 const dmSans = DM_Sans({
   subsets: ["latin"],
 
-  variable:
-    "--font-dm-sans",
+  variable: "--font-dm-sans",
 
   display: "swap",
-})
+});
 
 const fraunces = Fraunces({
   subsets: ["latin"],
 
-  variable:
-    "--font-fraunces",
+  variable: "--font-fraunces",
 
   display: "swap",
-})
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -46,11 +37,9 @@ const fraunces = Fraunces({
 |--------------------------------------------------------------------------
 */
 
-const STATIC_LOGO =
-  "/logo_upea.png"
+const STATIC_LOGO = "/logo_upea.png";
 
-const DEFAULT_INSTITUCION_ID =
-  12
+const DEFAULT_INSTITUCION_ID = 12;
 
 /*
 |--------------------------------------------------------------------------
@@ -58,35 +47,42 @@ const DEFAULT_INSTITUCION_ID =
 |--------------------------------------------------------------------------
 */
 
-const isValidUrl = (
-  url?: string
-): boolean => {
-  if (!url) return false
+const SAFE_DOMAINS = [
+  "upea.bo",
+  "upea.edu.bo",
+  "apiadministrador.upea.bo",
+  "archivosminio.upea.bo",
+];
+
+const isValidUrl = (url?: string): boolean => {
+  if (!url) return false;
 
   try {
-    const parsed = new URL(url)
+    const parsed = new URL(url.trim());
 
-    return [
-      "https:",
-      "http:",
-    ].includes(parsed.protocol)
+    if (!["https:", "http:"].includes(parsed.protocol)) {
+      return false;
+    }
+
+    const host = parsed.hostname.toLowerCase();
+
+    return SAFE_DOMAINS.some(
+      (domain) => host === domain || host.endsWith(`.${domain}`),
+    );
   } catch {
-    return false
+    return false;
   }
-}
+};
 
-const sanitizeField = (
-  text?: string,
-  maxLength = 160
-): string => {
-  if (!text) return ""
+const sanitizeField = (text?: string, maxLength = 160): string => {
+  if (!text) return "";
 
   return text
     .replace(/<[^>]*>/g, "")
     .replace(/[<>"'`]/g, "")
     .trim()
-    .slice(0, maxLength)
-}
+    .slice(0, maxLength);
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -97,27 +93,20 @@ const sanitizeField = (
 const INSTITUCIONES: Record<
   number,
   {
-    nombre: string
-    iniciales: string
-    mision: string
-    keywords: string[]
+    nombre: string;
+    iniciales: string;
+    mision: string;
+    keywords: string[];
   }
 > = {
   12: {
-    nombre:
-      "Ciencias de la Educación",
+    nombre: "Ciencias de la Educación",
 
     iniciales: "UPEA",
 
-    mision:
-      "Formación de profesionales en educación de excelencia.",
+    mision: "Formación de profesionales en educación de excelencia.",
 
-    keywords: [
-      "educación",
-      "pedagogía",
-      "UPEA",
-      "Bolivia",
-    ],
+    keywords: ["educación", "pedagogía", "UPEA", "Bolivia"],
   },
 
   22: {
@@ -125,15 +114,9 @@ const INSTITUCIONES: Record<
 
     iniciales: "UPEA",
 
-    mision:
-      "Formación de economistas con visión crítica y social.",
+    mision: "Formación de economistas con visión crítica y social.",
 
-    keywords: [
-      "economía",
-      "finanzas",
-      "UPEA",
-      "Bolivia",
-    ],
+    keywords: ["economía", "finanzas", "UPEA", "Bolivia"],
   },
 
   32: {
@@ -141,17 +124,11 @@ const INSTITUCIONES: Record<
 
     iniciales: "UPEA",
 
-    mision:
-      "Formación de profesionales en enfermería altamente competentes.",
+    mision: "Formación de profesionales en enfermería altamente competentes.",
 
-    keywords: [
-      "enfermería",
-      "salud",
-      "UPEA",
-      "Bolivia",
-    ],
+    keywords: ["enfermería", "salud", "UPEA", "Bolivia"],
   },
-}
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -159,26 +136,19 @@ const INSTITUCIONES: Record<
 |--------------------------------------------------------------------------
 */
 
-const getInstitucionData = (
-  id: number
-) => {
+const getInstitucionData = (id: number) => {
   return (
     INSTITUCIONES[id] || {
       nombre: "Institución",
 
       iniciales: "UPEA",
 
-      mision:
-        "Programas académicos de excelencia.",
+      mision: "Programas académicos de excelencia.",
 
-      keywords: [
-        "educación",
-        "universidad",
-        "UPEA",
-      ],
+      keywords: ["educación", "universidad", "UPEA"],
     }
-  )
-}
+  );
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -186,17 +156,15 @@ const getInstitucionData = (
 |--------------------------------------------------------------------------
 */
 
-export const viewport: Viewport =
-  {
-    width: "device-width",
+export const viewport: Viewport = {
+  width: "device-width",
 
-    initialScale: 1,
+  initialScale: 1,
 
-    themeColor: "#04246C",
+  themeColor: "#04246C",
 
-    colorScheme:
-      "light dark",
-  }
+  colorScheme: "light dark",
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -206,65 +174,34 @@ export const viewport: Viewport =
 
 export async function generateMetadata(): Promise<Metadata> {
   const institucionId =
-    Number(
-      process.env
-        .NEXT_PUBLIC_INSTITUCION_ID
-    ) ||
-    DEFAULT_INSTITUCION_ID
+    Number(process.env.NEXT_PUBLIC_INSTITUCION_ID) || DEFAULT_INSTITUCION_ID;
 
-  const data =
-    getInstitucionData(
-      institucionId
-    )
+  const data = getInstitucionData(institucionId);
 
-  const nombre =
-    sanitizeField(
-      data.nombre,
-      100
-    )
+  const nombre = sanitizeField(data.nombre, 100);
 
-  const iniciales =
-    sanitizeField(
-      data.iniciales,
-      20
-    )
+  const iniciales = sanitizeField(data.iniciales, 20);
 
-  const mision =
-    sanitizeField(
-      data.mision,
-      160
-    )
+  const mision = sanitizeField(data.mision, 160);
 
-  const keywords =
-    data.keywords
-      .map((keyword) =>
-        sanitizeField(
-          keyword
-        )
-      )
-      .join(", ")
+  const keywords = data.keywords
+    .map((keyword) => sanitizeField(keyword))
+    .join(", ");
 
   /*
    * URL SEGURA
    */
 
   const fallbackUrl =
-    process.env.NODE_ENV ===
-    "development"
+    process.env.NODE_ENV === "development"
       ? "http://localhost:3000"
-      : "https://carreras.upea.bo"
+      : "https://carreras.upea.bo";
 
-  const appUrl =
-    isValidUrl(
-      process.env
-        .NEXT_PUBLIC_URL
-    )
-      ? process.env
-          .NEXT_PUBLIC_URL!
-      : fallbackUrl
+  const appUrl = isValidUrl(process.env.NEXT_PUBLIC_URL)
+    ? process.env.NEXT_PUBLIC_URL!
+    : fallbackUrl;
 
-  const metadataBase =
-    new URL(appUrl)
+  const metadataBase = new URL(appUrl);
 
   return {
     metadataBase,
@@ -283,8 +220,7 @@ export async function generateMetadata(): Promise<Metadata> {
      * BASICS
      */
 
-    description:
-      mision,
+    description: mision,
 
     keywords,
 
@@ -296,8 +232,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
     creator: nombre,
 
-    publisher:
-      iniciales,
+    publisher: iniciales,
 
     alternates: {
       canonical: "/",
@@ -317,11 +252,9 @@ export async function generateMetadata(): Promise<Metadata> {
 
         follow: true,
 
-        "max-image-preview":
-          "large",
+        "max-image-preview": "large",
 
-        "max-snippet":
-          -1,
+        "max-snippet": -1,
       },
     },
 
@@ -340,8 +273,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
       title: `${nombre} - ${iniciales}`,
 
-      description:
-        mision,
+      description: mision,
 
       images: [
         {
@@ -361,17 +293,13 @@ export async function generateMetadata(): Promise<Metadata> {
      */
 
     twitter: {
-      card:
-        "summary_large_image",
+      card: "summary_large_image",
 
       title: `${nombre} - ${iniciales}`,
 
-      description:
-        mision,
+      description: mision,
 
-      images: [
-        STATIC_LOGO,
-      ],
+      images: [STATIC_LOGO],
     },
 
     /*
@@ -383,30 +311,25 @@ export async function generateMetadata(): Promise<Metadata> {
         {
           url: "/icon-light-32x32.png",
 
-          media:
-            "(prefers-color-scheme: light)",
+          media: "(prefers-color-scheme: light)",
         },
 
         {
           url: "/icon-dark-32x32.png",
 
-          media:
-            "(prefers-color-scheme: dark)",
+          media: "(prefers-color-scheme: dark)",
         },
 
         {
           url: "/icon.svg",
 
-          type:
-            "image/svg+xml",
+          type: "image/svg+xml",
         },
       ],
 
-      apple:
-        "/apple-icon.png",
+      apple: "/apple-icon.png",
 
-      shortcut:
-        STATIC_LOGO,
+      shortcut: STATIC_LOGO,
     },
 
     /*
@@ -414,11 +337,9 @@ export async function generateMetadata(): Promise<Metadata> {
      */
 
     verification: {
-      google:
-        process.env
-          .NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+      google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
     },
-  }
+  };
 }
 
 /*
@@ -430,54 +351,36 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   const institucionId =
-    Number(
-      process.env
-        .NEXT_PUBLIC_INSTITUCION_ID
-    ) ||
-    DEFAULT_INSTITUCION_ID
+    Number(process.env.NEXT_PUBLIC_INSTITUCION_ID) || DEFAULT_INSTITUCION_ID;
 
   /*
    * STORAGE URL
    */
 
-  const storageUrl =
-    process.env
-      .NEXT_PUBLIC_STORAGE_URL
+  const storageUrl = process.env.NEXT_PUBLIC_STORAGE_URL;
 
-  const safeStorageUrl =
-    isValidUrl(storageUrl)
+  const safeStorageUrl = isValidUrl(storageUrl);
 
   return (
     <html
-        lang="es"
-  data-scroll-behavior="smooth"
+      lang="es"
+      data-scroll-behavior="smooth"
       suppressHydrationWarning
       className={`${dmSans.variable} ${fraunces.variable}`}
     >
       <head>
         {safeStorageUrl && (
           <>
-            <link
-              rel="preconnect"
-              href={storageUrl}
-              crossOrigin="anonymous"
-            />
+            <link rel="preconnect" href={storageUrl} crossOrigin="anonymous" />
 
-            <link
-              rel="dns-prefetch"
-              href={storageUrl}
-            />
+            <link rel="dns-prefetch" href={storageUrl} />
           </>
         )}
 
-        <link
-          rel="icon"
-          href={STATIC_LOGO}
-          type="image/png"
-        />
+        <link rel="icon" href={STATIC_LOGO} type="image/png" />
       </head>
 
       <body
@@ -489,31 +392,18 @@ export default function RootLayout({
           overflow-x-hidden
         "
       >
-        <InstitucionProvider
-          institucionId={
-            institucionId
-          }
-        >
+        <InstitucionProvider institucionId={institucionId}>
           <div className="flex min-h-screen flex-col">
-            
-
-
             {/* MAIN */}
 
-            <main className="flex-1">
-              {children}
-            </main>
+            <main className="flex-1">{children}</main>
           </div>
         </InstitucionProvider>
 
         {/* ANALYTICS */}
 
-        {process.env
-          .NODE_ENV ===
-          "production" && (
-          <Analytics />
-        )}
+        {process.env.NODE_ENV === "production" && <Analytics />}
       </body>
     </html>
-  )
+  );
 }

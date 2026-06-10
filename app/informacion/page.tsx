@@ -13,6 +13,7 @@ import Image from 'next/image';
 import api from '@/lib/axios';
 import { getStorageUrl } from '@/lib/utils';
 import { sanitizeHTML } from '@/lib/sanitize';
+import { validateGoogleMapsUrl } from '@/lib/security';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 
@@ -593,10 +594,13 @@ function SeccionUbicacion({ institucion, ubicacion, primaryColor, secondaryColor
   secondaryColor: string;
   tertiaryColor: string;
 }) {
-  const safeMapUrl = useMemo(() => {
-    if (!institucion?.institucion_api_google_map) return '';
-    return isValidExternalUrl(institucion.institucion_api_google_map) ? institucion.institucion_api_google_map : '';
-  }, [institucion?.institucion_api_google_map]);
+const safeMapUrl = useMemo(() => {
+  return (
+    validateGoogleMapsUrl(
+      institucion?.institucion_api_google_map
+    ) || ''
+  );
+}, [institucion?.institucion_api_google_map]);
 
   const safeCoords = useMemo(() => {
     const lat = ubicacion?.ubicacion_latitud?.replace(/[^0-9.\-]/g, '') || '-16.489549430458553';

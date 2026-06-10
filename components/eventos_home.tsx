@@ -1,356 +1,230 @@
-"use client"
+"use client";
 
-import {
-  useEffect,
-  useRef,
-  useState,
-  useMemo,
-} from "react"
+import { useEffect, useRef, useState, useMemo } from "react";
 
-import Link from "next/link"
+import Link from "next/link";
 
-import {
-  Calendar,
-  Clock,
-  ArrowRight,
-  MapPin,
-} from "lucide-react"
+import { Calendar, Clock, ArrowRight, MapPin } from "lucide-react";
+import { sanitizeHTML } from "@/lib/sanitize";
+import api from "@/lib/axios";
 
-import api from "@/lib/axios"
+import { getStorageUrl, extractPlainText } from "@/lib/utils";
 
-import {
-  getStorageUrl,
-} from "@/lib/utils"
-
-import {
-  extractPlainText,
-} from "@/lib/sanitize"
-
-import CalendarWidget, {
-  EventoItem,
-} from "@/components/CalendarWidget"
+import CalendarWidget, { EventoItem } from "@/components/CalendarWidget";
 
 interface Institucion {
-  institucion_nombre?: string | null
+  institucion_nombre?: string | null;
 
-  institucion_iniciales?: string | null
+  institucion_iniciales?: string | null;
 
   colorinstitucion?: Array<{
-    color_primario?: string | null
-    color_secundario?: string | null
-    color_terciario?: string | null
-  }>
+    color_primario?: string | null;
+    color_secundario?: string | null;
+    color_terciario?: string | null;
+  }>;
 }
 
 interface EventsData {
-  eventos: EventoItem[]
+  eventos: EventoItem[];
 
-  institucion: Institucion | null
+  institucion: Institucion | null;
 }
 
-const isValidHexColor = (
-  color?: string | null
-): boolean => {
-  if (!color) return false
+const isValidHexColor = (color?: string | null): boolean => {
+  if (!color) return false;
 
-  return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(
-    color
-  )
-}
+  return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(color);
+};
 
 const getSafeColor = (
   color: string | undefined | null,
-  fallback: string
+  fallback: string,
 ): string => {
-  if (
-    color &&
-    isValidHexColor(color)
-  ) {
-    return color
+  if (color && isValidHexColor(color)) {
+    return color;
   }
 
-  return fallback
-}
+  return fallback;
+};
 
-const sanitizeImageUrl = (
-  url?: string | null
-): string | null => {
-  if (
-    !url ||
-    typeof url !== "string"
-  ) {
-    return null
+const sanitizeImageUrl = (url?: string | null): string | null => {
+  if (!url || typeof url !== "string") {
+    return null;
   }
 
   try {
     if (url.startsWith("http")) {
-      const parsed =
-        new URL(url)
+      const parsed = new URL(url);
 
       const allowedHosts = [
         "apiadministrador.upea.bo",
         "archivosminio.upea.bo",
-      ]
+        "upea.bo",
+        "upea.edu.bo",
+      ];
 
       if (
-        !allowedHosts.includes(
-          parsed.hostname
+        !allowedHosts.some(
+          (host) =>
+            parsed.hostname === host || parsed.hostname.endsWith(`.${host}`),
         )
       ) {
-        return null
+        return null;
       }
 
-      return parsed.toString()
+      if (!allowedHosts.includes(parsed.hostname)) {
+        return null;
+      }
+
+      return parsed.toString();
     }
 
-    return getStorageUrl(url)
+    return getStorageUrl(url);
   } catch {
-    return null
+    return null;
   }
-}
+};
 
-const formatDate = (
-  value?: string | null
-): string => {
+const formatDate = (value?: string | null): string => {
   if (!value) {
-    return "Fecha por definir"
+    return "Fecha por definir";
   }
 
   try {
-    return new Date(
-      value
-    ).toLocaleDateString(
-      "es-BO",
-      {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      }
-    )
+    return new Date(value).toLocaleDateString("es-BO", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
   } catch {
-    return "Fecha por definir"
+    return "Fecha por definir";
   }
-}
+};
 
 export function EventosHome() {
-  const sectionRef =
-    useRef<HTMLElement>(null)
+  const sectionRef = useRef<HTMLElement>(null);
 
-  const [data, setData] =
-    useState<EventsData>({
-      eventos: [],
-      institucion: null,
-    })
+  const [data, setData] = useState<EventsData>({
+    eventos: [],
+    institucion: null,
+  });
 
-  const [loading, setLoading] =
-    useState(true)
+  const [loading, setLoading] = useState(true);
 
-  const [error, setError] =
-    useState<string | null>(
-      null
-    )
+  const [error, setError] = useState<string | null>(null);
 
-  const [currentEvent, setCurrentEvent] =
-    useState(0)
+  const [currentEvent, setCurrentEvent] = useState(0);
 
   /*
    * ID INSTITUCIÓN
    */
 
-  const institucionId = Number(
-    process.env
-      .NEXT_PUBLIC_INSTITUCION_ID
-  )
+  const institucionId = Number(process.env.NEXT_PUBLIC_INSTITUCION_ID);
 
   const safeInstitucionId =
-    Number.isInteger(
-      institucionId
-    ) &&
-    institucionId > 0
-      ? institucionId
-      : 12
+    Number.isInteger(institucionId) && institucionId > 0 ? institucionId : 12;
 
   /*
    * FETCH
    */
 
   useEffect(() => {
-    const fetchData =
-      async () => {
-        try {
-          setLoading(true)
+    const fetchData = async () => {
+      try {
+        setLoading(true);
 
-          setError(null)
+        setError(null);
 
-          const results =
-            await Promise.allSettled([
-              api.get(
-                `/institucion/${safeInstitucionId}/gacetaEventos`
-              ),
+        const results = await Promise.allSettled([
+          api.get(`/institucion/${safeInstitucionId}/gacetaEventos`),
 
-              api.get(
-                `/institucionesPrincipal/${safeInstitucionId}`
-              ),
-            ])
+          api.get(`/institucionesPrincipal/${safeInstitucionId}`),
+        ]);
 
-          const gacetaRes =
-            results[0]
-              .status ===
-            "fulfilled"
-              ? results[0]
-                  .value
-              : null
+        const gacetaRes =
+          results[0].status === "fulfilled" ? results[0].value : null;
 
-          const instRes =
-            results[1]
-              .status ===
-            "fulfilled"
-              ? results[1]
-                  .value
-              : null
+        const instRes =
+          results[1].status === "fulfilled" ? results[1].value : null;
 
-          const eventos =
-            Array.isArray(
-              gacetaRes
-                ?.data
-                ?.upea_evento
-            )
-              ? gacetaRes
-                  .data
-                  .upea_evento
-              : []
+        const eventos = Array.isArray(gacetaRes?.data?.upea_evento)
+          ? gacetaRes.data.upea_evento
+          : [];
 
-          setData({
-            eventos,
+        setData({
+          eventos,
 
-            institucion:
-              instRes?.data
-                ?.Descripcion ||
-              null,
-          })
-        } catch {
-          setError(
-            "No se pudieron cargar los eventos."
-          )
-        } finally {
-          setLoading(false)
-        }
+          institucion: instRes?.data?.Descripcion || null,
+        });
+      } catch {
+        setError("No se pudieron cargar los eventos.");
+      } finally {
+        setLoading(false);
       }
+    };
 
-    fetchData()
-  }, [
-    safeInstitucionId,
-  ])
+    fetchData();
+  }, [safeInstitucionId]);
 
   /*
    * AUTOPLAY
    */
 
   useEffect(() => {
-    if (
-      data.eventos.length <=
-      1
-    )
-      return
+    if (data.eventos.length <= 1) return;
 
-    const interval =
-      setInterval(() => {
-        setCurrentEvent(
-          (prev) =>
-            (prev + 1) %
-            data.eventos
-              .length
-        )
-      }, 6000)
+    const interval = setInterval(() => {
+      setCurrentEvent((prev) => (prev + 1) % data.eventos.length);
+    }, 6000);
 
-    return () =>
-      clearInterval(
-        interval
-      )
-  }, [data.eventos])
+    return () => clearInterval(interval);
+  }, [data.eventos]);
 
   /*
    * COLORES
    */
 
-  const colores =
-    data.institucion
-      ?.colorinstitucion?.[0]
+  const colores = data.institucion?.colorinstitucion?.[0];
 
-  const primaryColor =
-    getSafeColor(
-      colores?.color_primario,
-      "#04246C"
-    )
+  const primaryColor = getSafeColor(colores?.color_primario, "#04246C");
 
-  const secondaryColor =
-    getSafeColor(
-      colores?.color_secundario,
-      "#FC0102"
-    )
+  const secondaryColor = getSafeColor(colores?.color_secundario, "#FC0102");
 
   /*
    * TEXTOS
    */
 
   const institucionNombre =
-    extractPlainText(
-      data.institucion
-        ?.institucion_nombre ||
-        ""
-    ) || "UPEA"
+    extractPlainText(data.institucion?.institucion_nombre || "") || "UPEA";
 
   /*
    * STATS
    */
 
-  const eventosDelMes =
-    useMemo(() => {
-      const now =
-        new Date()
+  const eventosDelMes = useMemo(() => {
+    const now = new Date();
 
-      return data.eventos.filter(
-        (
-          evento
-        ) => {
-          if (
-            !evento?.evento_fecha
-          ) {
-            return false
-          }
+    return data.eventos.filter((evento) => {
+      if (!evento?.evento_fecha) {
+        return false;
+      }
 
-          const eventDate =
-            new Date(
-              evento.evento_fecha
-            )
+      const eventDate = new Date(evento.evento_fecha);
 
-          return (
-            eventDate.getMonth() ===
-              now.getMonth() &&
-            eventDate.getFullYear() ===
-              now.getFullYear()
-          )
-        }
-      ).length
-    }, [data.eventos])
+      return (
+        eventDate.getMonth() === now.getMonth() &&
+        eventDate.getFullYear() === now.getFullYear()
+      );
+    }).length;
+  }, [data.eventos]);
 
-  const diasConEventos =
-    useMemo(() => {
-      const uniqueDays =
-        new Set(
-          data.eventos.map(
-            (
-              e
-            ) =>
-              new Date(
-                e.evento_fecha ||
-                  ""
-              ).getDate()
-          )
-        )
+  const diasConEventos = useMemo(() => {
+    const uniqueDays = new Set(
+      data.eventos.map((e) => new Date(e.evento_fecha || "").getDate()),
+    );
 
-      return uniqueDays.size
-    }, [data.eventos])
+    return uniqueDays.size;
+  }, [data.eventos]);
 
   /*
    * LOADING
@@ -381,8 +255,7 @@ export function EventosHome() {
             bg-center
           "
           style={{
-            backgroundImage:
-              "url('/imagenes/imagen_upea.jpg')",
+            backgroundImage: "url('/imagenes/imagen_upea.jpg')",
           }}
         />
 
@@ -411,17 +284,14 @@ export function EventosHome() {
               mb-4
             "
             style={{
-              borderTopColor:
-                primaryColor,
+              borderTopColor: primaryColor,
             }}
           />
 
-          <p className="text-white text-lg">
-            Cargando eventos...
-          </p>
+          <p className="text-white text-lg">Cargando eventos...</p>
         </div>
       </section>
-    )
+    );
   }
 
   /*
@@ -452,9 +322,7 @@ export function EventosHome() {
             bg-cover
             bg-center
           "
-          style={{
-          
-          }}
+          style={{}}
         />
 
         <div className="absolute inset-0 bg-[#00000090]" />
@@ -470,14 +338,10 @@ export function EventosHome() {
             text-center
           "
         >
-          <p className="text-white mb-6 text-lg">
-            {error}
-          </p>
+          <p className="text-white mb-6 text-lg">{error}</p>
 
           <button
-            onClick={() =>
-              window.location.reload()
-            }
+            onClick={() => window.location.reload()}
             className="
               px-6
               py-3
@@ -486,15 +350,14 @@ export function EventosHome() {
               font-semibold
             "
             style={{
-              backgroundColor:
-                primaryColor,
+              backgroundColor: primaryColor,
             }}
           >
             Reintentar
           </button>
         </div>
       </section>
-    )
+    );
   }
 
   return (
@@ -526,9 +389,7 @@ export function EventosHome() {
           bg-center
           bg-fixed
         "
-        style={{
-       
-        }}
+        style={{}}
       />
 
       {/* OVERLAY */}
@@ -595,11 +456,9 @@ export function EventosHome() {
                 rounded-full
               "
               style={{
-                backgroundColor:
-                  secondaryColor,
+                backgroundColor: secondaryColor,
               }}
             />
-
             Agenda Académica
           </div>
 
@@ -615,14 +474,10 @@ export function EventosHome() {
               mb-8
             "
             style={{
-              textShadow:
-                "0 8px 30px rgba(0,0,0,0.45)",
+              textShadow: "0 8px 30px rgba(0,0,0,0.45)",
             }}
           >
-            Eventos{" "}
-            {
-              institucionNombre
-            }
+            Eventos {institucionNombre}
           </h1>
 
           <div
@@ -634,8 +489,7 @@ export function EventosHome() {
               mb-8
             "
             style={{
-              backgroundColor:
-                secondaryColor,
+              backgroundColor: secondaryColor,
             }}
           />
 
@@ -648,13 +502,8 @@ export function EventosHome() {
               leading-relaxed
             "
           >
-            Descubre seminarios,
-            congresos,
-            talleres y
-            actividades
-            académicas
-            organizadas por la
-            institución.
+            Descubre seminarios, congresos, talleres y actividades académicas
+            organizadas por la institución.
           </p>
         </div>
 
@@ -671,49 +520,32 @@ export function EventosHome() {
         >
           {[
             {
-              label:
-                "Eventos",
-              value:
-                data.eventos
-                  .length,
-              color:
-                primaryColor,
+              label: "Eventos",
+              value: data.eventos.length,
+              color: primaryColor,
             },
 
             {
-              label:
-                "Mes actual",
-              value:
-                eventosDelMes,
-              color:
-                secondaryColor,
+              label: "Mes actual",
+              value: eventosDelMes,
+              color: secondaryColor,
             },
 
             {
-              label:
-                "Días activos",
-              value:
-                diasConEventos,
-              color:
-                "#ffffff",
+              label: "Días activos",
+              value: diasConEventos,
+              color: "#ffffff",
             },
 
             {
-              label:
-                "Disponibilidad",
-              value:
-                "24/7",
-              color:
-                primaryColor,
+              label: "Disponibilidad",
+              value: "24/7",
+              color: primaryColor,
             },
-          ].map(
-            (
-              item,
-              index
-            ) => (
-              <div
-                key={index}
-                className="
+          ].map((item, index) => (
+            <div
+              key={index}
+              className="
                   rounded-[32px]
                   bg-white/10
                   backdrop-blur-2xl
@@ -723,78 +555,52 @@ export function EventosHome() {
                   p-8
                   text-center
                 "
-              >
-                <p
-                  className="
+            >
+              <p
+                className="
                     text-4xl
                     font-bold
                   "
-                  style={{
-                    color:
-                      item.color,
-                  }}
-                >
-                  {
-                    item.value
-                  }
-                </p>
+                style={{
+                  color: item.color,
+                }}
+              >
+                {item.value}
+              </p>
 
-                <p className="text-white/70 mt-2">
-                  {
-                    item.label
-                  }
-                </p>
-              </div>
-            )
-          )}
+              <p className="text-white/70 mt-2">{item.label}</p>
+            </div>
+          ))}
         </div>
 
         {/* GRID */}
 
         <div className="grid xl:grid-cols-[1fr_360px] gap-10">
-
           {/* HERO */}
 
           <div>
             {data.eventos
-              .slice(
-                currentEvent,
-                currentEvent + 1
-              )
-              .map(
-                (
-                  evento
-                ) => {
-                  const titulo =
-                    extractPlainText(
-                      evento?.evento_titulo ||
-                        "Evento"
-                    )
+              .slice(currentEvent, currentEvent + 1)
+              .map((evento) => {
+                const titulo = extractPlainText(
+                  evento?.evento_titulo || "Evento",
+                );
 
-                  const descripcion =
-                    extractPlainText(
-                      evento?.evento_descripcion ||
-                        "Información próximamente disponible."
-                    ).slice(
-                      0,
-                      220
-                    )
+                const descripcion = extractPlainText(
+                  evento?.evento_descripcion ||
+                    "Información próximamente disponible.",
+                ).slice(0, 220);
 
-                  const imageUrl =
-                    sanitizeImageUrl(
-                      evento?.evento_imagen
-                    )
+                const imageUrl = sanitizeImageUrl(evento?.evento_imagen);
 
-                  return (
-                    <Link
-                      key={
-                        evento?.evento_id
-                      }
-                      href={`/eventos/${evento?.evento_id}`}
-                      className="group block"
-                    >
-                      <article
-                        className="
+                return (
+                  <Link
+                    key={evento?.evento_id}
+                    href={`/eventos/${evento?.evento_id}`}
+                    className="group block"
+                  >
+                    <article
+                      className="
                           relative
                           overflow-hidden
                           rounded-[40px]
@@ -803,55 +609,59 @@ export function EventosHome() {
                           border
                           border-white/20
                         "
-                      >
-                        <div className="absolute inset-0">
-                          {imageUrl ? (
-                            <img
-                              src={
-                                imageUrl
-                              }
-                              alt={
-                                titulo
-                              }
-                              loading="lazy"
-                              decoding="async"
-                              referrerPolicy="no-referrer"
-                              className="
+                    >
+                      <div className="absolute inset-0">
+                        {imageUrl ? (
+                          <img
+                            src={imageUrl}
+                            alt={titulo}
+                            loading="lazy"
+                            decoding="async"
+                            referrerPolicy="no-referrer"
+                            className="
                                 w-full
                                 h-full
                                 object-cover
-                                group-hover:scale-105
+                                brightness-[0.85]
+                                group-hover:scale-110
                                 transition-transform
                                 duration-[4000ms]
                               "
-                            />
-                          ) : (
-                            <div
-                              className="
+                          />
+                        ) : (
+                          <div
+                            className="
                                 w-full
                                 h-full
                               "
-                              style={{
-                                backgroundColor:
-                                  primaryColor,
-                              }}
-                            />
-                          )}
-
-                          <div
-                            className="
-                              absolute
-                              inset-0
-                              bg-gradient-to-t
-                              from-black/90
-                              via-black/50
-                              to-black/10
-                            "
+                            style={{
+                              backgroundColor: primaryColor,
+                            }}
                           />
-                        </div>
+                        )}
 
-                        <div
-                          className="
+<div
+  className="
+    absolute
+    inset-0
+    bg-gradient-to-r
+    from-black/90
+    via-black/70
+    to-black/35
+  "
+/>
+
+<div
+  className="
+    absolute
+    inset-0
+    bg-black/20
+  "
+/>
+                      </div>
+
+                      <div
+                        className="
                             relative
                             z-10
                             flex
@@ -861,9 +671,9 @@ export function EventosHome() {
                             p-8
                             md:p-14
                           "
-                        >
-                          <div
-                            className="
+                      >
+                        <div
+                          className="
                               inline-flex
                               items-center
                               gap-3
@@ -880,134 +690,142 @@ export function EventosHome() {
                               w-fit
                               mb-6
                             "
-                          >
-                            <span
-                              className="
+                        >
+                          <span
+                            className="
                                 w-2.5
                                 h-2.5
                                 rounded-full
                               "
-                              style={{
-                                backgroundColor:
-                                  secondaryColor,
-                              }}
-                            />
+                            style={{
+                              backgroundColor: secondaryColor,
+                            }}
+                          />
+                          Evento Académico
+                        </div>
 
-                            Evento Académico
-                          </div>
+                      <h2
+  className="
+    text-5xl
+    md:text-7xl
+    font-black
+    leading-[0.95]
+    text-white
+    max-w-4xl
+    mb-6
+  "
+  style={{
+    textShadow:
+      "0 6px 30px rgba(0,0,0,.9)",
+  }}
+>
+                          {titulo}
+                        </h2>
 
-                          <h2
+                      <p
+  className="
+    text-white
+    text-xl
+    md:text-2xl
+    leading-relaxed
+    max-w-3xl
+    mb-10
+    font-medium
+  "
+  style={{
+    textShadow:
+      "0 2px 10px rgba(0,0,0,.8)",
+  }}
+>
+                          {descripcion}
+                        </p>
+
+                        <div className="flex flex-wrap items-center gap-6">
+                          <div
                             className="
-                              text-4xl
-                              md:text-6xl
-                              font-bold
-                              leading-tight
-                              text-white
-                              max-w-4xl
-                              mb-6
-                            "
-                          >
-                            {
-                              titulo
-                            }
-                          </h2>
-
-                          <p
-                            className="
-                              text-white/85
-                              text-lg
-                              md:text-xl
-                              leading-relaxed
-                              max-w-3xl
-                              mb-10
-                            "
-                          >
-                            {
-                              descripcion
-                            }
-                          </p>
-
-                          <div className="flex flex-wrap items-center gap-6">
-                            <div
-                              className="
                                 flex
                                 items-center
                                 gap-2
                                 text-white/80
                               "
+                          >
+                            <Calendar className="w-5 h-5" />
+
+                            <span>{formatDate(evento?.evento_fecha)}</span>
+                          </div>
+
+                          {evento?.evento_hora && (
+                            <div
+className="
+  flex
+  items-center
+  gap-3
+  px-4
+  py-2
+  rounded-full
+  bg-black/40
+  backdrop-blur-md
+  border
+  border-white/10
+  text-white
+  font-semibold
+"
                             >
-                              <Calendar className="w-5 h-5" />
+                              <Clock className="w-5 h-5" />
+
+                              <span>{evento.evento_hora.slice(0, 5)}</span>
+                            </div>
+                          )}
+
+                          {evento?.evento_lugar && (
+                            <div
+className="
+  flex
+  items-center
+  gap-3
+  px-4
+  py-2
+  rounded-full
+  bg-black/40
+  backdrop-blur-md
+  border
+  border-white/10
+  text-white
+  font-semibold
+"
+                            >
+                              <MapPin className="w-5 h-5" />
 
                               <span>
-                                {formatDate(
-                                  evento?.evento_fecha
-                                )}
+                                {extractPlainText(evento.evento_lugar)}
                               </span>
                             </div>
+                          )}
 
-                            {evento?.evento_hora && (
-                              <div
-                                className="
-                                  flex
-                                  items-center
-                                  gap-2
-                                  text-white/80
-                                "
-                              >
-                                <Clock className="w-5 h-5" />
-
-                                <span>
-                                  {evento.evento_hora.slice(
-                                    0,
-                                    5
-                                  )}
-                                </span>
-                              </div>
-                            )}
-
-                            {evento?.evento_lugar && (
-                              <div
-                                className="
-                                  flex
-                                  items-center
-                                  gap-2
-                                  text-white/80
-                                "
-                              >
-                                <MapPin className="w-5 h-5" />
-
-                                <span>
-                                  {extractPlainText(
-                                    evento.evento_lugar
-                                  )}
-                                </span>
-                              </div>
-                            )}
-
-                            <div
-                              className="
-                                ml-auto
-                                w-16
-                                h-16
-                                rounded-2xl
-                                flex
-                                items-center
-                                justify-center
-                                backdrop-blur-xl
-                                bg-white/10
-                                border
-                                border-white/20
-                              "
-                            >
-                              <ArrowRight className="w-7 h-7 text-white" />
-                            </div>
+                          <div
+                          className="
+  flex
+  items-center
+  gap-3
+  px-4
+  py-2
+  rounded-full
+  bg-black/40
+  backdrop-blur-md
+  border
+  border-white/10
+  text-white
+  font-semibold
+"
+                          >
+                            <ArrowRight className="w-7 h-7 text-white" />
                           </div>
                         </div>
-                      </article>
-                    </Link>
-                  )
-                }
-              )}
+                      </div>
+                    </article>
+                  </Link>
+                );
+              })}
           </div>
 
           {/* CALENDARIO */}
@@ -1058,27 +876,21 @@ export function EventosHome() {
                   Calendario
                 </h3>
 
-                <p className="text-white/60">
-                  Agenda institucional
-                </p>
+                <p className="text-white/60">Agenda institucional</p>
               </div>
             </div>
 
             <CalendarWidget
               colores={{
-                color_primario:
-                  primaryColor,
+                color_primario: primaryColor,
 
-                color_secundario:
-                  secondaryColor,
+                color_secundario: secondaryColor,
               }}
-              eventos={
-                data.eventos
-              }
+              eventos={data.eventos}
             />
           </div>
         </div>
       </div>
     </section>
-  )
+  );
 }

@@ -1,3 +1,4 @@
+// app/publicaciones/[id]/page.tsx
 'use client';
 
 import { useState, useEffect, Suspense, useMemo } from 'react';
@@ -532,31 +533,8 @@ function PublicacionDetalleContent() {
 
                 {/* Actions */}
                 <div className="flex flex-wrap gap-3 pt-6 border-t" style={{ borderColor: `${hexToRgba(primaryColor, 0.2)}` }}>
-                  <button 
-                    onClick={handlePrint} 
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-medium text-sm transition-all hover:shadow-lg text-white"
-                    style={{ backgroundColor: primaryColor }}
-                  >
-                    <Printer className="w-4 h-4" /> Imprimir
-                  </button>
-                  {publicacion.publicaciones_documento && pdfUrl && (
-                    <a 
-                      href={pdfUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-medium text-sm transition-all hover:shadow-lg border-2"
-                      style={{ borderColor: primaryColor, color: primaryColor }}
-                    >
-                      <ExternalLink className="w-4 h-4" /> Abrir en nueva pestaña
-                    </a>
-                  )}
-                  <button 
-                    onClick={handleShare} 
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-medium text-sm transition-all hover:shadow-lg border-2"
-                    style={{ borderColor: secondaryColor, color: secondaryColor }}
-                  >
-                    <Share2 className="w-4 h-4" /> Compartir
-                  </button>
+
+              
                 </div>
               </div>
             </div>
