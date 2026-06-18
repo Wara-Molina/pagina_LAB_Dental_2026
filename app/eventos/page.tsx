@@ -354,9 +354,9 @@ function EventosContent() {
                   </div>
                 ) : (
                   <>
-                    <div className="space-y-6">
+                    <div className="space-y-10">
                       {eventosPagina.map((event) => (
-                        <Link key={event.evento_id} href={`/eventos/${event.evento_id}`} className="group">
+                        <Link key={event.evento_id} href={`/eventos/${event.evento_id}`} className="group block mb-4">
                           <div className="bg-white rounded-2xl overflow-hidden border shadow-sm hover:shadow-2xl transition-all duration-300 hover:-translate-y-2" style={{ borderColor: `${hexToRgba(primaryColor, 0.2)}` }}>
                             <div className="p-6 flex flex-col md:flex-row md:items-start gap-6">
                               
