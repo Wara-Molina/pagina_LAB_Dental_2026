@@ -377,7 +377,7 @@ function EventoDetalleContent() {
               <ArrowLeft className="w-6 h-6 text-white" />
             </button>
             <div className="relative w-full h-full flex items-center justify-center p-4 sm:p-8" onClick={(e) => e.stopPropagation()}>
-              <div className="relative w-full max-w-4xl max-h-[85vh]">
+              <div className="max-w-md h-auto object-contain rounded-lg shadow-2xl mx-auto">
                 <Image 
                   src={imageUrl} 
                   alt={evento.evento_titulo} 
