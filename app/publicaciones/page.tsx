@@ -637,34 +637,6 @@ function PublicacionesContent() {
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section
-          className="py-16"
-          style={{
-            background: `linear-gradient(135deg, ${hexToRgba(primaryColor, 0.1)}, ${hexToRgba(secondaryColor, 0.1)})`,
-          }}
-        >
-          <div className="max-w-4xl mx-auto px-4 text-center">
-            <h2
-              className="text-3xl font-bold mb-4 font-serif"
-              style={{ color: primaryColor }}
-            >
-              ¿Buscas algo específico?
-            </h2>
-            <p className="text-gray-600 mb-8 text-lg">
-              Contáctanos y te ayudaremos a encontrar la publicación que
-              necesitas
-            </p>
-            <Link
-              href="/contacto"
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-full text-white font-semibold shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
-              style={{ backgroundColor: primaryColor }}
-            >
-              Contactar ahora
-              <ArrowLeft className="w-5 h-5 transform rotate-180" />
-            </Link>
-          </div>
-        </section>
       </main>
 
       <Footer />
