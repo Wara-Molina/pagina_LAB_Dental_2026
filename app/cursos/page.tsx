@@ -550,7 +550,7 @@ function CursosContent() {
                 <div className="sticky top-24 space-y-8">
                   
                   {/* Calendar Widget */}
-                  <div className="bg-white rounded-2xl border shadow-lg overflow-hidden" style={{ borderColor: `${hexToRgba(primaryColor, 0.2)}` }}>
+                  <div className="bg-black/60 rounded-2xl border shadow-lg overflow-hidden" style={{ borderColor: `${hexToRgba(primaryColor, 0.2)}` }}>
                     <div className="p-4 border-b" style={{ borderColor: `${hexToRgba(primaryColor, 0.2)}`, background: `${hexToRgba(primaryColor, 0.05)}` }}>
                       <h2 className="font-bold text-lg flex items-center gap-2 text-gray-900">
                         <CalendarIcon className="w-5 h-5" style={{ color: primaryColor }} />

@@ -387,11 +387,11 @@ function ContactoContent() {
         {/* Content: Contact Info + Form */}
         <section className="py-12 lg:py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
-              
+        
               {/* Columna Izquierda: Info de Contacto */}
-              <div className="space-y-8">
-                
+           <div className="grid grid-cols-1 xl:grid-cols-7 gap-8">
+
+               <div className="xl:col-span-3">
                 {/* Contact Cards */}
                 <div className="bg-white rounded-2xl border shadow-lg overflow-hidden" style={{ borderColor: `${hexToRgba(primaryColor, 0.2)}` }}>
                   <div className="p-1" style={{ background: `linear-gradient(90deg, ${hexToRgba(primaryColor, 0.2)}, transparent)` }}>
@@ -497,33 +497,9 @@ function ContactoContent() {
                     </div>
                   </div>
                 </div>
-
-                {/* Social Links */}
-                {socialLinks.length > 0 && (
-                  <div className="bg-white rounded-2xl border shadow-lg overflow-hidden" style={{ borderColor: `${hexToRgba(secondaryColor, 0.2)}` }}>
-                    <div className="p-1" style={{ background: `linear-gradient(90deg, ${hexToRgba(secondaryColor, 0.2)}, transparent)` }}>
-                      <div className="p-6 md:p-8">
-                        <h3 className="text-xl font-bold mb-4 text-gray-900">Síguenos en Redes</h3>
-                        <div className="flex flex-wrap gap-3">
-                          {socialLinks.map((social) => (
-                            <a
-                              key={social.name}
-                              href={social.safeUrl || '#'}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-all hover:scale-105 group"
-                              title={social.name}
-                              style={{ color: social.color }}
-                            >
-                              <social.icon className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                            </a>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
+                </div>
+                
+                <div className="xl:col-span-4">
                 {/* Map */}
                 {safeMapsUrl && (
                   <div className="bg-white rounded-2xl border shadow-lg overflow-hidden" style={{ borderColor: `${hexToRgba(primaryColor, 0.2)}` }}>
@@ -561,10 +537,42 @@ function ContactoContent() {
                     </div>
                   </div>
                 )}
+                </div>
+
+                <div className="xl:col-span-3">
+                {/* Social Links */}
+                {socialLinks.length > 0 && (
+                  <div className="lg:col-span-2 bg-white rounded-2xl border shadow-lg overflow-hidden"
+    style={{ borderColor: `${hexToRgba(secondaryColor, 0.2)}` }}>
+                    <div className="p-1" style={{ background: `linear-gradient(90deg, ${hexToRgba(secondaryColor, 0.2)}, transparent)` }}>
+                      <div className="p-6 md:p-8">
+                        <h3 className="text-xl font-bold mb-4 text-gray-900">Síguenos en Redes</h3>
+                        <div className="flex flex-wrap gap-3">
+                          {socialLinks.map((social) => (
+                            <a
+                              key={social.name}
+                              href={social.safeUrl || '#'}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-all hover:scale-105 group"
+                              title={social.name}
+                              style={{ color: social.color }}
+                            >
+                              <social.icon className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+ 
+</div>
+
 
               </div>
 
-            </div>
+            
           </div>
         </section>
       </main>
