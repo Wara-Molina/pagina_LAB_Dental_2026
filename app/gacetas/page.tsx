@@ -107,58 +107,116 @@ function GacetasContent() {
   const [secondaryColor, setSecondaryColor] = useState('#FC0102');
   const [tertiaryColor, setTertiaryColor] = useState('#020733');
 
-  useEffect(() => {
-    let isMounted = true;
+useEffect(() => {
+  let isMounted = true;
 
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const [gacetaRes, instRes] = await Promise.all([
-          api.get(`/institucion/${institucionId}/gacetaEventos`),
-          api.get(`/institucionesPrincipal/${institucionId}`)
-        ]);
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        if (!isMounted) return;
-
-        const gacetasData = (gacetaRes.data.upea_gaceta_universitaria || [])
-          .filter((g: any) => g.gaceta_id)
-          .map((g: any) => ({
-            gaceta_id: g.gaceta_id,
-            gaceta_titulo: sanitizeTextField(g.gaceta_titulo, 200),
-            gaceta_fecha: g.gaceta_fecha,
-            gaceta_documento: g.gaceta_documento,
-            gaceta_tipo: sanitizeTextField(g.gaceta_tipo, 50)
-          })) as Gaceta[];
-
-        setGacetas(gacetasData);
-        setInstitucion(instRes.data.Descripcion || null);
-
-        const tipos = Array.from(new Set(gacetasData.map(g => g.gaceta_tipo))).filter(Boolean);
-        setTiposDisponibles(['TODOS', ...tipos as string[]]);
-
-        if (instRes.data.Descripcion?.colorinstitucion?.[0]) {
-          const colors = instRes.data.Descripcion.colorinstitucion[0];
-          setPrimaryColor(getSafeColor(colors.color_primario, '#04246C'));
-          setSecondaryColor(getSafeColor(colors.color_secundario, '#FC0102'));
-          setTertiaryColor(getSafeColor(colors.color_terciario, '#020733'));
-        }
-      } catch (err: any) {
-        if (isMounted) {
-          if (process.env.NODE_ENV === 'development') {
-            console.warn('Error cargando gacetas:', err);
+      const gacetaPromise = api
+        .get(`/institucion/${institucionId}/gacetaEventos`)
+        .catch((error) => {
+          if (error.response?.status === 404) {
+            return {
+              data: {
+                upea_gaceta_universitaria: []
+              }
+            };
           }
-          setError('No se pudieron cargar las gacetas. Intente más tarde.');
-        }
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
+          throw error;
+        });
 
-    fetchData();
-    return () => { isMounted = false; };
-  }, [institucionId]);
+      const institucionPromise = api.get(
+        `/institucionesPrincipal/${institucionId}`
+      );
+
+      const [gacetaRes, instRes] = await Promise.all([
+        gacetaPromise,
+        institucionPromise,
+      ]);
+
+      if (!isMounted) return;
+
+      const gacetasData = (
+        gacetaRes.data.upea_gaceta_universitaria || []
+      )
+        .filter((g: any) => g.gaceta_id)
+        .map((g: any) => ({
+          gaceta_id: g.gaceta_id,
+          gaceta_titulo: sanitizeTextField(
+            g.gaceta_titulo,
+            200
+          ),
+          gaceta_fecha: g.gaceta_fecha,
+          gaceta_documento: g.gaceta_documento,
+          gaceta_tipo: sanitizeTextField(
+            g.gaceta_tipo,
+            50
+          ),
+        })) as Gaceta[];
+
+      setGacetas(gacetasData);
+      setInstitucion(
+        instRes.data.Descripcion || null
+      );
+
+      const tipos = Array.from(
+        new Set(
+          gacetasData.map(
+            (g) => g.gaceta_tipo
+          )
+        )
+      ).filter(Boolean);
+
+      setTiposDisponibles([
+        'TODOS',
+        ...(tipos as string[]),
+      ]);
+
+      if (
+        instRes.data.Descripcion
+          ?.colorinstitucion?.[0]
+      ) {
+        const colors =
+          instRes.data.Descripcion
+            .colorinstitucion[0];
+
+        setPrimaryColor(
+          getSafeColor(
+            colors.color_primario,
+            '#04246C'
+          )
+        );
+        setSecondaryColor(
+          getSafeColor(
+            colors.color_secundario,
+            '#FC0102'
+          )
+        );
+        setTertiaryColor(
+          getSafeColor(
+            colors.color_terciario,
+            '#020733'
+          )
+        );
+      }
+ } catch (err: any) {
+  if (isMounted) {
+    setGacetas([]);
+  }
+} finally {
+      if (isMounted) setLoading(false);
+    }
+  };
+
+  fetchData();
+
+  return () => {
+    isMounted = false;
+  };
+}, [institucionId]);
 
   const gacetasFiltradas = useMemo(() => {
     const porTipo = filtroTipo === 'TODOS' ? gacetas : gacetas.filter(g => g.gaceta_tipo === filtroTipo);

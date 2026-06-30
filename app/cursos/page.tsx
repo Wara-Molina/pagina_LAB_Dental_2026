@@ -132,20 +132,34 @@ function CursosContent() {
         const instRes = await api.get(`/institucionesPrincipal/${institucionId}`);
         setInstitucion(instRes.data.Descripcion);
 
-        if (instRes.data.Descripcion?.colorinstitucion?.[0]) {
-          const colors = instRes.data.Descripcion.colorinstitucion[0];
-          setPrimaryColor(getSafeColor(colors.color_primario, '#04246C'));
-          setSecondaryColor(getSafeColor(colors.color_secundario, '#FC0102'));
-          setTertiaryColor(getSafeColor(colors.color_terciario, '#020733'));
-        }
-      } catch (err: any) {
-        console.error('Error cargando cursos:', err);
-        setError(process.env.NODE_ENV === 'production' 
-          ? 'No se pudieron cargar los cursos.' 
-          : 'No se pudieron cargar los cursos. Intenta más tarde.');
-      } finally {
-        setLoading(false);
+           if (instRes.data.Descripcion?.colorinstitucion?.[0]) {
+        const colors = instRes.data.Descripcion.colorinstitucion[0];
+        setPrimaryColor(getSafeColor(colors.color_primario, '#04246C'));
+        setSecondaryColor(getSafeColor(colors.color_secundario, '#FC0102'));
+        setTertiaryColor(getSafeColor(colors.color_terciario, '#020733'));
       }
+
+    } catch (err: any) {
+      console.error('Error cargando cursos:', err);
+
+      const status = err?.response?.status;
+
+      if (status === 404) {
+        setCursos([]);
+        setEventos([]);
+        setTiposConCursos([]);
+        setError(null);
+        return;
+      }
+
+      setError(
+        process.env.NODE_ENV === 'production'
+          ? 'No se pudieron cargar los cursos.'
+          : 'No se pudieron cargar los cursos. Intenta más tarde.'
+      );
+    } finally {
+      setLoading(false);
+    }
     };
 
     fetchData();
@@ -173,12 +187,21 @@ function CursosContent() {
     return searchCursos(filtrados, busqueda);
   }, [cursos, tipoActivo, busqueda]);
 
-  const totalPaginas = Math.ceil(cursosFiltrados.length / itemsPorPagina);
-  const safePaginaActual = Math.min(Math.max(1, paginaActual), totalPaginas);
+const totalPaginas = Math.max(
+  1,
+  Math.ceil(cursosFiltrados.length / itemsPorPagina)
+);
+const safePaginaActual = totalPaginas === 0
+  ? 1
+  : Math.min(Math.max(1, paginaActual), totalPaginas);
   const inicio = (safePaginaActual - 1) * itemsPorPagina;
   const fin = inicio + itemsPorPagina;
-  const cursosPagina = cursosFiltrados.slice(inicio, fin);
-
+ const cursosPagina =
+  cursosFiltrados.length === 0
+    ? []
+    : cursosFiltrados.slice(inicio, fin);
+const sinCursos = cursos.length === 0;
+const sinResultados = cursos.length > 0 && cursosFiltrados.length === 0;
   const cambiarPagina = (nuevaPagina: number) => {
     const safePagina = Number.isInteger(nuevaPagina) && nuevaPagina > 0 && nuevaPagina <= totalPaginas ? nuevaPagina : 1;
     const params = new URLSearchParams(searchParams.toString());
@@ -322,9 +345,9 @@ function CursosContent() {
                   }
                 </span>
                 {busqueda && (
-                  <span className="text-white/60">
-                    Buscando: "<strong className="text-white">{busqueda}</strong>"
-                  </span>
+<span className="text-white/60">
+  Buscando: <strong className="text-white">{busqueda}</strong>
+</span>
                 )}
               </div>
             </div>
@@ -385,22 +408,48 @@ function CursosContent() {
               
               {/* Columna Izquierda: Grid de Cursos */}
               <div className="lg:col-span-2">
-                {cursosPagina.length === 0 ? (
-                  <div className="text-center py-20">
-                    <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-6">
-                      <BookOpen className="w-10 h-10" style={{ color: primaryColor }} />
-                    </div>
-                    <h3 className="text-2xl font-bold mb-2 text-gray-900">No se encontraron cursos</h3>
-                    <p className="text-gray-600 mb-8">Intenta con otros filtros o términos de búsqueda</p>
-                    <button
-                      onClick={() => { setTipoActivo('TODOS'); setBusqueda(''); }}
-                      className="px-8 py-3 rounded-full text-white font-medium shadow-lg hover:shadow-xl transition-all"
-                      style={{ backgroundColor: primaryColor }}
-                    >
-                      Ver todos los cursos
-                    </button>
-                  </div>
-                ) : (
+                {sinCursos || sinResultados ? (
+                <div className="text-center py-24">
+  <div
+    className="w-24 h-24 mx-auto mb-6 rounded-full flex items-center justify-center"
+    style={{
+      backgroundColor: hexToRgba(primaryColor, 0.08),
+    }}
+  >
+    <BookOpen
+      className="w-12 h-12"
+      style={{ color: primaryColor }}
+    />
+  </div>
+
+  <h3 className="text-3xl font-bold text-gray-900 mb-3">
+    {sinCursos
+      ? 'No hay cursos disponibles'
+      : 'No se encontraron resultados'}
+  </h3>
+
+  <p className="text-gray-600 text-lg max-w-xl mx-auto mb-8">
+    {sinCursos
+      ? 'Actualmente no existen cursos registrados.'
+      : 'Prueba con otros filtros o términos de búsqueda.'}
+  </p>
+
+  {!sinCursos && (
+    <button
+      onClick={() => {
+        setTipoActivo('TODOS');
+        setBusqueda('');
+      }}
+      className="px-8 py-3 rounded-xl text-white font-semibold"
+      style={{
+        backgroundColor: primaryColor,
+      }}
+    >
+      Limpiar filtros
+    </button>
+  )}
+</div>
+) : (
                   <>
                     <div className="grid md:grid-cols-2 gap-6">
                       {cursosPagina.map((curso) => {
@@ -609,15 +658,20 @@ function CursosContent() {
 
 export default function CursosPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="w-12 h-12 border-4 border-gray-300 rounded-full animate-spin" style={{ borderTopColor: '#04246C' }} />
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex flex-col">
+          <Header />
+          <div className="flex-1 flex items-center justify-center">
+            <div
+              className="w-12 h-12 border-4 border-gray-300 rounded-full animate-spin"
+              style={{ borderTopColor: '#04246C' }}
+            />
+          </div>
+          <Footer />
         </div>
-        <Footer />
-      </div>
-    }>
+      }
+    >
       <CursosContent />
     </Suspense>
   );

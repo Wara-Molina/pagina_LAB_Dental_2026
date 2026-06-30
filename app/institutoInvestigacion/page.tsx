@@ -222,14 +222,19 @@ function InstitutoInvestigacionContent() {
           setSecondaryColor(getSafeColor(colors.color_secundario, '#FC0102'));
           setTertiaryColor(getSafeColor(colors.color_terciario, '#020733'));
         }
-      } catch (err: any) {
-        if (isMounted) {
-          if (process.env.NODE_ENV === 'development') {
-            console.warn('Error cargando datos del instituto:', err);
-          }
-          setError('No se pudieron cargar los datos del instituto. Intente más tarde.');
-        }
-      } finally {
+      }catch (err: any) {
+  if (isMounted) {
+    console.error(err);
+
+    setGacetas([]);
+    setEventos([]);
+    setPublicaciones([]);
+    setInstitucion(null);
+
+ 
+    setError(null);
+  }
+} finally {
         if (isMounted) setLoading(false);
       }
     };
@@ -371,28 +376,7 @@ function InstitutoInvestigacionContent() {
   }
 
   // ==================== RENDER ERROR ====================
-  if (error) {
-    return (
-      <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(135deg, ${hexToRgba(primaryColor, 0.1)}, ${hexToRgba(secondaryColor, 0.1)})` }}>
-        <Header />
-        <div className="flex-1 flex items-center justify-center p-8">
-          <div className="text-center max-w-md">
-            <div className="text-7xl mb-6">⚠️</div>
-            <h2 className="text-3xl font-bold mb-3 text-gray-900">Error de conexión</h2>
-            <p className="text-gray-600 mb-8">{error}</p>
-            <button 
-              onClick={() => window.location.reload()}
-              className="px-8 py-3 rounded-full text-white font-medium shadow-lg hover:shadow-xl transition-all"
-              style={{ backgroundColor: primaryColor }}
-            >
-              Reintentar
-            </button>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
+
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(180deg, #fff 0%, ${hexToRgba(primaryColor, 0.08)} 100%)` }}>
@@ -549,24 +533,22 @@ function InstitutoInvestigacionContent() {
                   <p className="text-gray-600">Conoce los proyectos de investigación que estamos desarrollando</p>
                 </div>
 
-                {gacetasFiltradas.length === 0 ? (
-                  <div className="text-center py-20">
-                    <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-6">
-                      <FileText className="w-10 h-10" style={{ color: primaryColor }} />
-                    </div>
-                    <h3 className="text-2xl font-bold mb-2 text-gray-900">No hay proyectos registrados</h3>
-                    <p className="text-gray-600 mb-8">Próximamente se publicarán nuevos proyectos de investigación</p>
-                    {busqueda && (
-                      <button 
-                        onClick={() => setBusqueda('')}
-                        className="px-8 py-3 rounded-full text-white font-medium shadow-lg hover:shadow-xl transition-all"
-                        style={{ backgroundColor: primaryColor }}
-                      >
-                        Limpiar búsqueda
-                      </button>
-                    )}
-                  </div>
-                ) : (
+{gacetasFiltradas.length === 0 ? (
+  <div className="flex flex-col items-center justify-center py-24 text-center">
+    <FileText
+      className="w-16 h-16 mb-4"
+      style={{ color: primaryColor }}
+    />
+
+    <h3 className="text-3xl font-bold text-gray-900 mb-2">
+      No se encontraron archivos
+    </h3>
+
+    <p className="text-gray-500">
+      No existen proyectos registrados actualmente.
+    </p>
+  </div>
+) : (
                   <>
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {gacetasPagina.map((gaceta) => (
@@ -610,24 +592,22 @@ function InstitutoInvestigacionContent() {
                   <p className="text-gray-600">Artículos, papers y documentos académicos producidos por el instituto</p>
                 </div>
 
-                {publicacionesFiltradas.length === 0 ? (
-                  <div className="text-center py-20">
-                    <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-6">
-                      <BookOpen className="w-10 h-10" style={{ color: primaryColor }} />
-                    </div>
-                    <h3 className="text-2xl font-bold mb-2 text-gray-900">No hay publicaciones disponibles</h3>
-                    <p className="text-gray-600 mb-8">Las publicaciones del instituto aparecerán aquí</p>
-                    {busqueda && (
-                      <button 
-                        onClick={() => setBusqueda('')}
-                        className="px-8 py-3 rounded-full text-white font-medium shadow-lg hover:shadow-xl transition-all"
-                        style={{ backgroundColor: primaryColor }}
-                      >
-                        Limpiar búsqueda
-                      </button>
-                    )}
-                  </div>
-                ) : (
+{publicacionesFiltradas.length === 0 ? (
+  <div className="flex flex-col items-center justify-center py-24 text-center">
+    <BookOpen
+      className="w-16 h-16 mb-4"
+      style={{ color: primaryColor }}
+    />
+
+    <h3 className="text-3xl font-bold text-gray-900 mb-2">
+      No se encontraron archivos
+    </h3>
+
+    <p className="text-gray-500">
+      No existen publicaciones registradas actualmente.
+    </p>
+  </div>
+) : (
                   <>
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {publicacionesPagina.map((publi) => (
@@ -699,24 +679,22 @@ function InstitutoInvestigacionContent() {
                   <p className="text-gray-600">Congresos, seminarios, talleres y actividades académicas</p>
                 </div>
 
-                {eventosFiltrados.length === 0 ? (
-                  <div className="text-center py-20">
-                    <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-6">
-                      <Calendar className="w-10 h-10" style={{ color: primaryColor }} />
-                    </div>
-                    <h3 className="text-2xl font-bold mb-2 text-gray-900">No hay eventos programados</h3>
-                    <p className="text-gray-600 mb-8">Próximamente se anunciarán nuevos eventos de investigación</p>
-                    {busqueda && (
-                      <button 
-                        onClick={() => setBusqueda('')}
-                        className="px-8 py-3 rounded-full text-white font-medium shadow-lg hover:shadow-xl transition-all"
-                        style={{ backgroundColor: primaryColor }}
-                      >
-                        Limpiar búsqueda
-                      </button>
-                    )}
-                  </div>
-                ) : (
+{eventosFiltrados.length === 0 ? (
+  <div className="flex flex-col items-center justify-center py-24 text-center">
+    <Calendar
+      className="w-16 h-16 mb-4"
+      style={{ color: primaryColor }}
+    />
+
+    <h3 className="text-3xl font-bold text-gray-900 mb-2">
+      No se encontraron archivos
+    </h3>
+
+    <p className="text-gray-500">
+      No existen eventos registrados actualmente.
+    </p>
+  </div>
+) : (
                   <>
                     <div className="space-y-6">
                       {eventosPagina.map((evento) => (

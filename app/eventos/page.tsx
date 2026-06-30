@@ -148,13 +148,16 @@ function EventosContent() {
           setTertiaryColor(getSafeColor(colors.color_terciario, '#020733'));
         }
       } catch (err: any) {
-        if (isMounted) {
-          if (process.env.NODE_ENV === 'development') {
-            console.warn('Error cargando eventos:', err);
-          }
-          setError('No se pudieron cargar los eventos. Intente más tarde.');
-        }
-      } finally {
+  if (isMounted) {
+    console.error(err);
+
+    setEventos([]);
+    setInstitucion(null);
+
+    // No mostrar pantalla de error
+    setError(null);
+  }
+} finally {
         if (isMounted) setLoading(false);
       }
     };
@@ -232,24 +235,7 @@ function EventosContent() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(135deg, ${hexToRgba(primaryColor, 0.1)}, ${hexToRgba(secondaryColor, 0.1)})` }}>
-        <Header />
-        <div className="flex-1 flex items-center justify-center p-4">
-          <div className="text-center max-w-md">
-            <div className="text-6xl mb-4">⚠️</div>
-            <h2 className="text-2xl font-bold mb-2 text-gray-900">Error de conexión</h2>
-            <p className="text-gray-600 mb-6">{error}</p>
-            <button onClick={() => window.location.reload()} className="px-6 py-3 rounded-full text-white font-medium shadow-lg hover:shadow-xl transition-shadow" style={{ backgroundColor: primaryColor }}>
-              Reintentar
-            </button>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
+
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(180deg, #fff 0%, ${hexToRgba(primaryColor, 0.08)} 100%)` }}>
@@ -342,15 +328,21 @@ function EventosContent() {
                     <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-6">
                       <Calendar className="w-10 h-10" style={{ color: primaryColor }} />
                     </div>
-                    <h3 className="text-2xl font-bold mb-2 text-gray-900">No se encontraron eventos</h3>
-                    <p className="text-gray-600 mb-8">Intenta con otros términos de búsqueda</p>
-                    <button 
-                      onClick={() => setBusqueda('')} 
-                      className="px-8 py-3 rounded-full text-white font-medium shadow-lg hover:shadow-xl transition-all"
-                      style={{ backgroundColor: primaryColor }}
-                    >
-                      Limpiar búsqueda
-                    </button>
+                 <h3 className="text-2xl font-bold mb-2 text-gray-900">
+  No se encontraron archivos
+</h3>
+
+<p className="text-gray-600 mb-8">
+  No existen eventos registrados en este momento.
+</p>    {busqueda && (
+  <button
+    onClick={() => setBusqueda('')}
+    className="px-8 py-3 rounded-full text-white font-medium shadow-lg hover:shadow-xl transition-all"
+    style={{ backgroundColor: primaryColor }}
+  >
+    Limpiar búsqueda
+  </button>
+)}
                   </div>
                 ) : (
                   <>
