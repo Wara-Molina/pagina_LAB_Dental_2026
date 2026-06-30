@@ -457,7 +457,7 @@ export function Footer() {
         <div
           className={`border-t ${borderColor} pt-8 flex flex-col md:flex-row justify-between items-center gap-4`}
         >
-         <p className="text-sm text-black text-center md:text-left">
+         <p className="text-sm text-white text-center md:text-left">
             &copy; {new Date().getFullYear()} {institucionNombre}. Todos los
             derechos reservados.
           </p>
@@ -465,13 +465,13 @@ export function Footer() {
           <div className="flex gap-6 text-sm">
             <Link
               href="/privacidad"
-             className="text-black hover:text-blue-300 transition-colors"
+             className="text-white hover:text-blue-300 transition-colors"
             >
               Política de privacidad
             </Link>
             <Link
               href="/terminos"
-              className="text-black hover:text-blue-300 transition-colors"
+              className="text-white hover:text-blue-300 transition-colors"
             >
               Términos de uso
             </Link>
@@ -479,7 +479,7 @@ export function Footer() {
               href="https://utic.upea.bo"
               target="_blank"
               rel="noopener noreferrer"
-              className={`text-black hover:text-blue-300 transition-colors flex items-center gap-1`}
+              className={`text-white hover:text-blue-300 transition-colors flex items-center gap-1`}
             >
               UTIC UPEA <ExternalLink className="w-3 h-3" />
             </a>
