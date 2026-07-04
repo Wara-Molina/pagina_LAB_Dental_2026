@@ -160,6 +160,7 @@ export function AutoridadesHome() {
    */
 
   useEffect(() => {
+    if (data.autoridades.length <= 3) return;
     const scrollContainer = scrollRef.current;
 
     if (!scrollContainer) return;
@@ -211,9 +212,10 @@ export function AutoridadesHome() {
    * ITEMS
    */
 
-  const duplicatedItems = useMemo(() => {
-    return [...data.autoridades, ...data.autoridades];
-  }, [data.autoridades]);
+const items = useMemo(() => {
+  return data.autoridades;
+}, [data.autoridades]);
+const centerItems = items.length <= 3;
 
   /*
    * LOADING
@@ -488,16 +490,20 @@ export function AutoridadesHome() {
 
         {/* SLIDER */}
 
-        <div
-          ref={scrollRef}
-          className="
-            flex
-            gap-8
-            overflow-x-hidden
-            py-8
-          "
-        >
-          {duplicatedItems.map((autoridad, index) => {
+<div
+  ref={scrollRef}
+  className={`
+    flex
+    gap-8
+    py-8
+    ${
+      centerItems
+        ? "justify-center overflow-hidden"
+        : "justify-start overflow-x-auto lg:overflow-x-hidden"
+    }
+  `}
+>
+          {items.map((autoridad, index) => {
             const imageUrl = sanitizeImageUrl(autoridad?.foto_autoridad);
 
             const nombre = extractPlainText(
