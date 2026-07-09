@@ -178,8 +178,7 @@ function EventoDetalleContent() {
     fetchEvento();
     return () => { isMounted = false; };
   }, [eventoId]);
-
-  // Modal ESC handler
+  
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setImageModalOpen(false);

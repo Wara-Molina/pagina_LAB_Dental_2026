@@ -2,10 +2,9 @@
 
 Proyecto web desarrollado con Next.js, TypeScript y Tailwind CSS para la gestión y difusión de información institucional, eventos, cursos y publicaciones del laboratorio dental.
 
-## Carreras asociadas
+## Carrera asociada
 
 Este sistema está orientado a las carreras de:
-- Educacion Parvularia
 - Laboratorio Dental
 
 ## Descripción

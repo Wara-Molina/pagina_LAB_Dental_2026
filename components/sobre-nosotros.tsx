@@ -296,23 +296,22 @@ const SobreNosotrosDefault = memo(function SobreNosotrosDefault({
 
         <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           <div className="lg:col-span-5">
-           
-<div className="relative rounded-3xl overflow-hidden shadow-2xl bg-slate-100 aspect-[4/5]">
-  <img
-    src="/imagenes/imagen_upea.jpg"
-    alt={institucionNombre}
-    loading="lazy"
-    decoding="async"
-    className="w-full h-full object-cover"
-  />
+            <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-slate-100 aspect-[4/5]">
+              <img
+                src="/imagenes/imagen_upea.jpg"
+                alt={institucionNombre}
+                loading="lazy"
+                decoding="async"
+                className="w-full h-full object-cover"
+              />
 
-  <div
-    className="absolute inset-0"
-    style={{
-      background: `linear-gradient(to top, ${tertiaryColor}40 0%, transparent 60%)`,
-    }}
-  />
-</div>
+              <div
+                className="absolute inset-0"
+                style={{
+                  background: `linear-gradient(to top, ${tertiaryColor}40 0%, transparent 60%)`,
+                }}
+              />
+            </div>
             <div
               className="absolute mt-[-50px] ml-6 px-6 py-4 rounded-2xl shadow-xl backdrop-blur-sm border"
               style={{
@@ -591,7 +590,7 @@ const SobreNosotrosDental = memo(function SobreNosotrosDental({
                   decoding="async"
                   className="w-full h-full object-cover"
                   onError={(e) => {
-                     e.currentTarget.style.display = "none";
+                    e.currentTarget.style.display = "none";
                   }}
                 />
 

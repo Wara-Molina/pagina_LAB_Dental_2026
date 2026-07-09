@@ -22,11 +22,10 @@ export function ScrollBlurText({ text, className = "", startBlur = 80, endBlur =
       const rect = containerRef.current.getBoundingClientRect()
       const windowHeight = window.innerHeight
 
-      // Calculate when element enters viewport (bottom) to when it reaches center
       const scrollProgress = Math.max(0, Math.min(1, (windowHeight - rect.top) / (windowHeight * 0.6)))
 
       const newProgress = words.map((_, index) => {
-        const wordDelay = index * 0.2 // Stagger delay per word (increased from 0.15)
+        const wordDelay = index * 0.2 
         const wordProgress = Math.max(0, Math.min(1, (scrollProgress - wordDelay) / 0.3))
         return wordProgress
       })
@@ -34,7 +33,7 @@ export function ScrollBlurText({ text, className = "", startBlur = 80, endBlur =
       setWordProgress(newProgress)
     }
 
-    handleScroll() // Initial check
+    handleScroll() 
     window.addEventListener("scroll", handleScroll, { passive: true })
     return () => window.removeEventListener("scroll", handleScroll)
   }, [words.length])

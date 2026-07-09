@@ -96,12 +96,6 @@ const getEmbedUrl = (url?: string): string => {
   return `https://www.youtube.com/embed/${id}?autoplay=0&rel=0&modestbranding=1`;
 };
 
-/*
-|--------------------------------------------------------------------------
-| COLORS
-|--------------------------------------------------------------------------
-*/
-
 const isValidHexColor = (color: string | undefined): boolean => {
   if (!color) return false;
 
@@ -234,10 +228,6 @@ function VideoDetalleContent() {
     );
   }
 
-  /*
-   * ERROR
-   */
-
   if (error || !video) {
     return (
       <div className="min-h-screen flex flex-col bg-[#f8f5ef]">
@@ -283,10 +273,6 @@ function VideoDetalleContent() {
       </div>
     );
   }
-
-  /*
-   * YOUTUBE
-   */
 
   const youtubeId = getYouTubeId(video.video_enlace);
 

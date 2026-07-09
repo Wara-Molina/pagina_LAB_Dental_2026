@@ -120,10 +120,7 @@ export function sanitizeHTML(html: string): string {
   }
 }
 
-export function sanitizeText(
-  text: string,
-  maxLength = 500,
-): string {
+export function sanitizeText(text: string, maxLength = 500): string {
   if (!text) {
     return "";
   }
@@ -204,7 +201,6 @@ export function sanitizeGoogleMap(url: string): string {
     return "";
   }
 }
-
 
 export default {
   sanitizeHTML,

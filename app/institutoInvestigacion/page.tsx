@@ -171,8 +171,6 @@ function InstitutoInvestigacionContent() {
         ]);
 
         if (!isMounted) return;
-
-        // ✅ Gacetas: filtrar ESTRICTAMENTE
         const gacetasData = (gacetaEventosRes.data.upea_gaceta_universitaria || [])
           .filter((g: any) => esTipoInvestigacion(g.gaceta_tipo))
           .map((g: any) => ({
@@ -183,7 +181,7 @@ function InstitutoInvestigacionContent() {
             gaceta_tipo: sanitizeText(g.gaceta_tipo, 50)
           })) as GacetaInvestigacion[];
         
-        // ✅ Eventos: filtrar ESTRICTAMENTE
+    
         const eventosData = (gacetaEventosRes.data.upea_evento || [])
           .filter((e: any) => esTipoInvestigacion(e.tipo_evento))
           .map((e: any) => ({
@@ -197,7 +195,7 @@ function InstitutoInvestigacionContent() {
             tipo_evento: sanitizeText(e.tipo_evento, 50)
           })) as EventoInvestigacion[];
         
-        // ✅ Publicaciones: filtrar ESTRICTAMENTE
+       
         const publicacionesData = (recursosRes.data.upea_publicaciones || [])
           .filter((p: any) => esTipoInvestigacion(p.publicaciones_tipo))
           .map((p: any) => ({
@@ -243,14 +241,14 @@ function InstitutoInvestigacionContent() {
     return () => { isMounted = false; };
   }, [institucionId]);
 
-  // Reset pagination on tab change
+ 
   useEffect(() => {
     setPaginaProyectos(1);
     setPaginaPublicaciones(1);
     setPaginaEventos(1);
   }, [activeTab]);
 
-  // Reset pagination on search change
+ 
   useEffect(() => {
     setPaginaProyectos(1);
     setPaginaPublicaciones(1);
@@ -266,7 +264,7 @@ function InstitutoInvestigacionContent() {
     });
   };
 
-  // Filtered & searched items with useMemo
+  
   const gacetasFiltradas = useMemo(() => {
     return searchItems(gacetas, busqueda, 'gaceta_titulo');
   }, [gacetas, busqueda]);
@@ -279,7 +277,7 @@ function InstitutoInvestigacionContent() {
     return searchItems(eventos, busqueda, 'evento_titulo', 'evento_descripcion');
   }, [eventos, busqueda]);
 
-  // Pagination calculations
+
   const totalPaginasProyectos = Math.max(1, Math.ceil(gacetasFiltradas.length / itemsPorPagina));
   const totalPaginasPublicaciones = Math.max(1, Math.ceil(publicacionesFiltradas.length / itemsPorPagina));
   const totalPaginasEventos = Math.max(1, Math.ceil(eventosFiltrados.length / itemsPorPagina));

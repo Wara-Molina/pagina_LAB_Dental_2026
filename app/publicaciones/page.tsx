@@ -636,7 +636,6 @@ function PublicacionesContent() {
             )}
           </div>
         </section>
-
       </main>
 
       <Footer />

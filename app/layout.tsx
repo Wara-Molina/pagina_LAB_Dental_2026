@@ -188,9 +188,7 @@ export async function generateMetadata(): Promise<Metadata> {
     .map((keyword) => sanitizeField(keyword))
     .join(", ");
 
-  /*
-   * URL SEGURA
-   */
+
 
   const fallbackUrl =
     process.env.NODE_ENV === "development"
@@ -206,9 +204,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     metadataBase,
 
-    /*
-     * TITLE
-     */
+  
 
     title: {
       default: `${nombre} - ${iniciales}`,
@@ -216,9 +212,7 @@ export async function generateMetadata(): Promise<Metadata> {
       template: `%s | ${nombre}`,
     },
 
-    /*
-     * BASICS
-     */
+
 
     description: mision,
 
@@ -238,9 +232,6 @@ export async function generateMetadata(): Promise<Metadata> {
       canonical: "/",
     },
 
-    /*
-     * ROBOTS
-     */
 
     robots: {
       index: true,
@@ -258,9 +249,6 @@ export async function generateMetadata(): Promise<Metadata> {
       },
     },
 
-    /*
-     * OPEN GRAPH
-     */
 
     openGraph: {
       type: "website",
@@ -288,9 +276,6 @@ export async function generateMetadata(): Promise<Metadata> {
       ],
     },
 
-    /*
-     * TWITTER
-     */
 
     twitter: {
       card: "summary_large_image",
@@ -302,9 +287,7 @@ export async function generateMetadata(): Promise<Metadata> {
       images: [STATIC_LOGO],
     },
 
-    /*
-     * ICONS
-     */
+
 
     icons: {
       icon: [
@@ -332,9 +315,6 @@ export async function generateMetadata(): Promise<Metadata> {
       shortcut: STATIC_LOGO,
     },
 
-    /*
-     * GOOGLE VERIFY
-     */
 
     verification: {
       google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
@@ -342,11 +322,7 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-/*
-|--------------------------------------------------------------------------
-| ROOT LAYOUT
-|--------------------------------------------------------------------------
-*/
+
 
 export default function RootLayout({
   children,
@@ -356,9 +332,7 @@ export default function RootLayout({
   const institucionId =
     Number(process.env.NEXT_PUBLIC_INSTITUCION_ID) || DEFAULT_INSTITUCION_ID;
 
-  /*
-   * STORAGE URL
-   */
+
 
   const storageUrl = process.env.NEXT_PUBLIC_STORAGE_URL;
 
@@ -400,7 +374,7 @@ export default function RootLayout({
           </div>
         </InstitucionProvider>
 
-        {/* ANALYTICS */}
+  
 
         {process.env.NODE_ENV === "production" && <Analytics />}
       </body>

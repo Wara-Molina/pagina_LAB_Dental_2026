@@ -114,15 +114,9 @@ export function HeroSection() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // =========================
-  // ID DESDE ENV
-  // =========================
+
 
   const institucionId = Number(process.env.NEXT_PUBLIC_INSTITUCION_ID);
-
-  // =========================
-  // VALIDACIÓN SEGURA
-  // =========================
 
   const safeInstitucionId =
     Number.isInteger(institucionId) && institucionId > 0 ? institucionId : 12;
@@ -158,9 +152,7 @@ export function HeroSection() {
     fetchData();
   }, [safeInstitucionId]);
 
-  // =========================
-  // SCROLL EFFECT
-  // =========================
+
 
   useEffect(() => {
     const handleScroll = () => {
@@ -182,10 +174,6 @@ export function HeroSection() {
 
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  // =========================
-  // AUTOPLAY
-  // =========================
 
   useEffect(() => {
     if (data.portadas.length <= 1) return;
@@ -282,7 +270,7 @@ export function HeroSection() {
   }
 
   // =========================
-  // HERO DIFERENTE SOLO ID 34
+  // HERO 
   // =========================
 
   if (safeInstitucionId === 34) {
@@ -492,7 +480,7 @@ const HeroDefault = memo(function HeroDefault({
 });
 
 // ======================================================
-// HERO NUEVO SOLO PARA ID 34
+// HERO 
 // ======================================================
 
 const HeroLaboratorioDental = memo(function HeroLaboratorioDental({

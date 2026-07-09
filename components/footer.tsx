@@ -17,10 +17,9 @@ import {
 } from "lucide-react";
 import DOMPurify from "dompurify";
 
-// ✅ Importa tu cliente axios configurado (con interceptores, baseURL, etc.)
 import api from "@/lib/axios";
 
-// === INTERFACES (Tipado seguro) ===
+// === INTERFACES  ===
 interface ColorInstitucion {
   color_primario: string;
   color_secundario: string;
@@ -58,10 +57,6 @@ interface FooterLink {
 
 // === UTILIDADES DE SEGURIDAD Y UI ===
 
-/**
- * Calcula si un color hex es claro para ajustar contraste de texto
- * Fórmula de luminancia relativa WCAG
- */
 const isLightColor = (hex: string): boolean => {
   const color = hex.replace("#", "");
   if (color.length !== 6) return false;
@@ -85,9 +80,6 @@ const isValidUrl = (url: string | undefined): boolean => {
   }
 };
 
-/**
- * Sanitiza HTML para renderizado seguro (previene XSS)
- */
 const sanitizeHtml = (html: string | undefined): string => {
   if (!html) return "";
   return DOMPurify.sanitize(html, { ALLOWED_TAGS: [] }); // Solo texto plano
@@ -95,21 +87,17 @@ const sanitizeHtml = (html: string | undefined): string => {
 
 // === COMPONENTE PRINCIPAL ===
 export function Footer() {
-  // 🔐 ID desde variable de entorno (nunca hardcodeado)
+
   const institucionId = Number(process.env.NEXT_PUBLIC_INSTITUCION_ID) || 32;
 
-  // 📊 Estado reactivo
   const [institucion, setInstitucion] = useState<InstitucionData | null>(null);
   const [linksExternos, setLinksExternos] = useState<LinkExterno[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 🎨 Colores dinámicos desde API
   const [primaryColor, setPrimaryColor] = useState("#04246C");
   const [secondaryColor, setSecondaryColor] = useState("#FC0102");
   const [tertiaryColor, setTertiaryColor] = useState("#020733");
-
-  // 🔁 Efecto para cargar datos (con cleanup para evitar memory leaks)
   useEffect(() => {
     let isMounted = true;
 
@@ -118,7 +106,6 @@ export function Footer() {
         setLoading(true);
         setError(null);
 
-        // 🚀 Peticiones en paralelo optimizadas
         const [instRes, recursosRes] = await Promise.all([
           api.get(`/institucionesPrincipal/${institucionId}`),
           api.get(`/institucion/${institucionId}/recursos`),
@@ -126,18 +113,15 @@ export function Footer() {
 
         if (!isMounted) return;
 
-        // ✅ Extraer y validar datos
         const instData = instRes.data?.Descripcion;
         if (instData) {
           setInstitucion(instData);
 
-          // Filtrar links activos y limitar a 4 para el diseño
           const links = (recursosRes.data?.linksExternoInterno || [])
             .filter((l: any) => l?.estado === 1 && isValidUrl(l?.url_link))
             .slice(0, 4) as LinkExterno[];
           setLinksExternos(links);
 
-          // 🎨 Aplicar colores desde API con fallback seguro
           if (instData.colorinstitucion?.[0]) {
             setPrimaryColor(
               instData.colorinstitucion[0].color_primario || "#04246C",
@@ -152,7 +136,7 @@ export function Footer() {
         }
       } catch (err: any) {
         if (isMounted) {
-          // 🔒 No exponer detalles de error en producción
+       
           const msg =
             process.env.NODE_ENV === "development"
               ? err?.message || "Error cargando datos"
@@ -168,10 +152,10 @@ export function Footer() {
     fetchData();
     return () => {
       isMounted = false;
-    }; // ✅ Cleanup para evitar setState en componente desmontado
+    }; 
   }, [institucionId]);
 
-  // 🎨 Calcular clases de texto según contraste del fondo
+  
   const isLightBackground = isLightColor(tertiaryColor);
   const textColor = isLightBackground ? "text-gray-900" : "text-white";
   const textColorMuted = isLightBackground ? "text-gray-600" : "text-white/80";
@@ -184,7 +168,7 @@ export function Footer() {
   const hoverBg = isLightBackground ? "hover:bg-gray-100" : "hover:bg-white/20";
   const iconBg = isLightBackground ? "bg-gray-100" : "bg-white/10";
 
-  // 🔗 Links de navegación (adaptados a tu estructura UPEA)
+  
   const navLinks: { label: string; href: string }[] = [
     { label: "Inicio", href: "/" },
     { label: "Cursos", href: "/cursos" },
@@ -194,7 +178,7 @@ export function Footer() {
     { label: "Investigación", href: "/institutoInvestigacion" },
   ];
 
-  // 🌐 Redes sociales con validación de URL
+
   const socialLinks = [
     {
       name: "Facebook",
@@ -216,14 +200,14 @@ export function Footer() {
     },
   ].filter((link) => isValidUrl(link.url));
 
-  // 🖼️ URL del logo con fallback
+
   const logoUrl = institucion?.institucion_logo;
   const institucionNombre = institucion?.institucion_nombre || "Carrera";
   const institucionIniciales = institucion?.institucion_iniciales || "UPEA";
 
   // === RENDERIZADO ===
 
-  // 🔄 Estado de carga
+
   if (loading) {
     return (
       <footer className="bg-gray-900 text-white py-12">
@@ -248,7 +232,6 @@ export function Footer() {
     );
   }
 
-  // ⚠️ Estado de error (sin exponer detalles sensibles)
   if (error) {
     return (
       <footer className="bg-gray-900 text-white py-8">
@@ -268,7 +251,7 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         {/* === GRID PRINCIPAL === */}
         <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8 mb-16">
-          {/* 🏷️ Brand Section (2 columnas en desktop) */}
+      
           <div className="lg:col-span-2">
             <Link href="/" className="flex items-center gap-3 mb-6 group">
               <div
@@ -291,7 +274,7 @@ export function Footer() {
               </div>
             </Link>
 
-            {/* Misión sanitizada */}
+            {/* Misión */}
             <p
               className={`${textColorMuted} leading-relaxed mb-6 max-w-sm text-sm`}
             >
@@ -338,7 +321,7 @@ export function Footer() {
             </div>
           </div>
 
-          {/* 🔗 Navegación */}
+          {/* Navegación */}
           <div>
             <h4 className={`font-medium ${textColor} mb-4`}>Navegación</h4>
             <ul className="space-y-3">
@@ -355,7 +338,7 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* 🔗 Enlaces Externos (desde API) */}
+          {/*  Enlaces Externos */}
           <div>
             <h4 className={`font-medium ${textColor} mb-4`}>Accesos</h4>
             <ul className="space-y-3">
@@ -381,7 +364,7 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* 🌐 Redes Sociales + Logo */}
+       
           <div>
             <h4 className={`font-medium ${textColor} mb-4`}>Síguenos</h4>
 

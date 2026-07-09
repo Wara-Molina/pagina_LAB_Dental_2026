@@ -111,9 +111,7 @@ export function AutoridadesHome() {
 
   const [error, setError] = useState<string | null>(null);
 
-  /*
-   * FETCH
-   */
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -155,9 +153,7 @@ export function AutoridadesHome() {
     fetchData();
   }, []);
 
-  /*
-   * AUTOSCROLL
-   */
+
 
   useEffect(() => {
     if (data.autoridades.length <= 3) return;

@@ -179,7 +179,7 @@ function PublicacionDetalleContent() {
     return () => { isMounted = false; };
   }, [publicacionId]);
 
-  // Modal ESC handler
+
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setImageModalOpen(false);
