@@ -1,10 +1,10 @@
-# LAB Dental 2026
+# Laboratorio Dental 2026
 
 Proyecto web desarrollado con Next.js, TypeScript y Tailwind CSS para la gestión y difusión de información institucional, eventos, cursos y publicaciones del laboratorio dental.
 
 ## Carrera asociada
 
-Este sistema está orientado a las carreras de:
+Este sistema está orientado a la carrera de:
 - Laboratorio Dental
 
 ## Descripción
